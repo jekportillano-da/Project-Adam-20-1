@@ -36,22 +36,23 @@ def get_tip():
     Only return the formatted result. Do not repeat the prompt or explain anything else.
     """
 
-    try:
+
+        try:
             response = co.chat(
-            model="command-r-plus",
-            message=prompt,
-            temperature=0.3
-        )
+                model="command-r-plus",
+                message=prompt,
+                temperature=0.3
+            )
 
-        tip_text = response.text.strip() if response.text else "⚠️ No tip was generated. Try again."
+            tip_text = response.text.strip() if response.text else "⚠️ No tip was generated. Try again."
 
-        # Debugging output in console
-        print("=== DEBUG PROMPT ===")
-        print(prompt)
-        print("=== DEBUG RESPONSE ===")
-        print(tip_text)
+            # Debugging output in console
+            print("=== DEBUG PROMPT ===")
+            print(prompt)
+            print("=== DEBUG RESPONSE ===")
+            print(tip_text)
 
-        return jsonify({"tip": tip_text})
+            return jsonify({"tip": tip_text})
 
     except Exception as e:
         print("Error generating tip:", e)
