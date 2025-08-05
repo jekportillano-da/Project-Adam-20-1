@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width">
   <title>Budget Buddy</title>
   <style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     body {
       font-family: sans-serif;
       padding: 20px;
@@ -18,14 +19,28 @@
       margin-top: 20px;
       font-weight: bold;
     }
+    select {
+      padding: 10px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
   <h2>Enter your daily budget</h2>
   <form id="budget-form">
     <input type="number" id="budget" placeholder="₱100" required>
+    <select id="tipType" required>
+      <option value="breakdown" selected>Budget Breakdown</option>
+      <option value="savings">Money-Saving Tip</option>
+    </select>
+    <select id="duration" required>
+      <option value="daily" selected>Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+    </select>
     <button type="submit">Get Tip</button>
   </form>
+
   <p id="suggestion"></p>
 
   <!-- ✅ Load JS properly via Flask -->
