@@ -1,0 +1,150 @@
+.insights-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing);
+    padding: var(--spacing);
+}
+
+.insights-content > div {
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+}
+
+.insights-content h3 {
+    color: var(--primary-color);
+    margin: 0 0 1rem;
+    font-size: 1.2rem;
+}
+
+/* Chart Styles */
+.chart-container {
+    height: 200px;
+    margin-top: 1rem;
+}
+
+/* Progress Bar Styles */
+.progress-container {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+/* What-If Scenarios */
+.scenario-container {
+    display: grid;
+    gap: 1rem;
+}
+
+.scenario {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: white;
+    border-radius: var(--border-radius);
+}
+
+.scenario label {
+    font-weight: 500;
+}
+
+.scenario-result {
+    color: var(--money-color);
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+/* Mood Indicator */
+.mood-indicator {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--border-radius);
+}
+
+.mood-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mood-emoji {
+    font-size: 2rem;
+}
+
+.mood-label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.mood-insight {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    padding: 0.5rem;
+    background: var(--background-color);
+    border-radius: 4px;
+}
+
+.insight-item.success {
+    color: var(--success-color);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.insight-item.warning {
+    color: var(--warning-color);
+    background: rgba(255, 152, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .insights-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .budget-panel {
+        width: 100%;
+    }
+    
+    .insights-panel {
+        width: 100%;
+    }
+}

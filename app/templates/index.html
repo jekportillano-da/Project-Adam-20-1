@@ -7,38 +7,102 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tips.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/breakdown.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/insights.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="app-header">
         <h1>Smart Budget Assistant</h1>
-        <p class="subtitle">Get personalized budget breakdowns and money-saving tips</p>
-
-        <form id="budget-form" class="budget-form">
-            <div class="input-group">
-                <label for="budget">Budget Amount (PHP)</label>
-                <input 
-                    type="text" 
-                    id="budget" 
-                    placeholder="Enter amount (e.g., 1,000)" 
-                    pattern="^[0-9,]*\.?[0-9]*$"
-                    required
-                    autocomplete="off"
-                    inputmode="numeric">
+        <p class="subtitle">Make smarter financial decisions</p>
+    </div>
+    <div class="app-container">
+        <div class="budget-panel">
+            <div class="panel-header">
+                <h2>Budget Planner</h2>
+                <p>Plan and track your spending</p>
             </div>
 
-            <div class="input-group">
-                <label for="duration">Time Period</label>
-                <select id="duration" required>
-                    <option value="daily" selected>Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
+            <form id="budget-form" class="budget-form">
+                <div class="input-group">
+                    <label for="budget">Budget Amount (PHP)</label>
+                    <input 
+                        type="text" 
+                        id="budget" 
+                        placeholder="Enter amount (e.g., 1,000)" 
+                        pattern="^[0-9,]*\.?[0-9]*$"
+                        required
+                        autocomplete="off"
+                        inputmode="numeric">
+                </div>
+
+                <div class="input-group">
+                    <label for="duration">Time Period</label>
+                    <select id="duration" required>
+                        <option value="daily" selected>Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="submit-btn">Calculate Budget Plan</button>
+            </form>
+
+            <div id="suggestion" class="budget-results"></div>
+        </div>
+
+        <div class="insights-panel">
+            <div class="panel-header">
+                <h2>Financial Insights</h2>
+                <p>Track your progress and potential</p>
             </div>
 
-            <button type="submit" class="submit-btn">Get Budget Tips</button>
-        </form>
+            <div class="insights-content">
+                <div class="savings-forecast">
+                    <h3>Savings Forecast</h3>
+                    <div class="chart-container">
+                        <canvas id="savingsChart"></canvas>
+                    </div>
+                </div>
 
-        <div id="suggestion"></div>
+                <div class="emergency-fund">
+                    <h3>Emergency Fund Progress</h3>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress" id="emergencyProgress"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span class="current">Current: ₱0</span>
+                            <span class="goal">Goal: ₱50,000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="what-if-scenarios">
+                    <h3>What If Calculator</h3>
+                    <div class="scenario-container">
+                        <div class="scenario">
+                            <label>If you save 10% more:</label>
+                            <div class="scenario-result" id="tenPercentMore">+₱0/month</div>
+                        </div>
+                        <div class="scenario">
+                            <label>Yearly potential:</label>
+                            <div class="scenario-result" id="yearlyPotential">₱0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="savings-mood">
+                    <h3>Budget Health</h3>
+                    <div class="mood-indicator">
+                        <div class="mood-header">
+                            <span class="mood-emoji" id="budgetMood">😊</span>
+                            <span class="mood-label">On track!</span>
+                        </div>
+                        <div class="mood-insight"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
