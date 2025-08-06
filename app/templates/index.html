@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Budget Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tips.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/breakdown.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Smart Budget Assistant</h1>
+        <p class="subtitle">Get personalized budget breakdowns and money-saving tips</p>
+
+        <form id="budget-form" class="budget-form">
+            <div class="input-group">
+                <label for="budget">Budget Amount (PHP)</label>
+                <input 
+                    type="text" 
+                    id="budget" 
+                    placeholder="Enter amount (e.g., 1,000)" 
+                    pattern="^[0-9,]*\.?[0-9]*$"
+                    required
+                    autocomplete="off"
+                    inputmode="numeric">
+            </div>
+
+            <div class="input-group">
+                <label for="duration">Time Period</label>
+                <select id="duration" required>
+                    <option value="daily" selected>Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+
+            <button type="submit" class="submit-btn">Get Budget Tips</button>
+        </form>
+
+        <div id="suggestion"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
