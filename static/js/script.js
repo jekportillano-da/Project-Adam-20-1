@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('budget-form');
     const suggestionBox = document.getElementById('suggestion');
     const submitButton = form.querySelector('button[type="submit"]');
+    const exportButton = document.getElementById('export-budget');
+    
+    // Store budget data for export
+    let currentBudgetData = null;
 
     function showLoading(isLoading) {
         submitButton.disabled = isLoading;
@@ -44,6 +48,47 @@ document.addEventListener('DOMContentLoaded', () => {
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            // Convert label to more readable format
+                            const label = tooltipItems[0].label;
+                            if (label === '1mo') return '1 month from now';
+                            if (label === '2mo') return '2 months from now';
+                            if (label === '3mo') return '3 months from now';
+                            if (label === '6mo') return '6 months from now';
+                            if (label === '1yr') return '1 year from now';
+                            return label;
+                        },
+                        label: function(context) {
+                            // Format the tooltip value with currency
+                            const value = context.raw;
+                            const formatted = formatCurrency(value);
+                            
+                            // Calculate growth if previous data point exists
+                            let growthText = '';
+                            if (context.dataIndex > 0) {
+                                const previousValue = context.dataset.data[context.dataIndex - 1];
+                                const growth = value - previousValue;
+                                const growthPercent = previousValue > 0 ? (growth / previousValue * 100).toFixed(1) : 0;
+                                growthText = `\nGrowth: ${formatCurrency(growth)} (${growthPercent}%)`;
+                            }
+                            
+                            return `Projected savings: ${formatted}${growthText}`;
+                        }
+                    },
+                    padding: 10,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    bodyFont: {
+                        size: 14
+                    },
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    }
                 }
             },
             scales: {
@@ -134,6 +179,19 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update UI with all data
             updateUIWithData(breakdownData, savingsData, insightsData);
             
+            // Store data for export
+            currentBudgetData = {
+                budget: cleanBudget,
+                duration: duration,
+                breakdown: breakdownData,
+                savings: savingsData,
+                insights: insightsData,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Enable export button
+            exportButton.disabled = false;
+            
         } catch (error) {
             console.error('Error:', error);
             showError(error.message || 'Something went wrong. Please try again.');
@@ -172,6 +230,95 @@ document.addEventListener('DOMContentLoaded', () => {
             budgetInput.value = num.toLocaleString('en-US');
         }
     }
+    
+    // Export button functionality
+    exportButton.addEventListener('click', function() {
+        if (!currentBudgetData) return;
+        
+        exportBudgetPlan(currentBudgetData);
+    });
+    
+    // Function for formatting numbers for CSV export (without currency symbols)
+    function formatNumberForCSV(amount) {
+        // Parse the value if it's a string
+        if (typeof amount === 'string') {
+            amount = parseFloat(amount);
+        }
+        
+        // Return a simple number formatted with 2 decimal places
+        return amount.toFixed(2);
+    }
+    
+    // Function to export budget plan
+    function exportBudgetPlan(data) {
+        // Create CSV content
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Add header
+        csvContent += "Budget Buddy - Smart Financial Planning\n";
+        csvContent += `Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n\n`;
+        
+        // Add budget details
+        csvContent += "BUDGET OVERVIEW\n";
+        csvContent += `Amount,${formatNumberForCSV(data.budget)}\n`;
+        csvContent += `Time Period,${data.duration.charAt(0).toUpperCase() + data.duration.slice(1)}\n\n`;
+        
+        // Add budget breakdown
+        csvContent += "BUDGET BREAKDOWN\n";
+        csvContent += "Category,Amount\n";
+        
+        for (let category in data.breakdown.categories) {
+            const formattedCategory = category.split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+            csvContent += `${formattedCategory},${formatNumberForCSV(data.breakdown.categories[category])}\n`;
+        }
+        
+        csvContent += `Total Essential Expenses,${formatNumberForCSV(data.breakdown.total_essential)}\n`;
+        csvContent += `Total Savings,${formatNumberForCSV(data.breakdown.total_savings)}\n\n`;
+        
+        // Add savings forecast
+        csvContent += "SAVINGS FORECAST\n";
+        csvContent += "Time Period,Projected Amount\n";
+        
+        const timeLabels = ['1 Month', '2 Months', '3 Months', '6 Months', '1 Year'];
+        data.savings.monthly_projections.forEach((amount, index) => {
+            if (index < timeLabels.length) {
+                csvContent += `${timeLabels[index]},${formatNumberForCSV(amount)}\n`;
+            }
+        });
+        
+        csvContent += `\nEmergency Fund Progress,${data.savings.emergency_fund_progress}%\n\n`;
+        
+        // Add what-if calculations
+        csvContent += "WHAT IF CALCULATIONS\n";
+        csvContent += `If you save 10% more each month,${formatNumberForCSV(data.savings.what_if_scenarios.monthly_10pct_more || data.savings.what_if_scenarios.ten_percent_increase || 0)}/month\n`;
+        csvContent += `Yearly potential,${formatNumberForCSV(data.savings.what_if_scenarios.yearly_10pct_more || data.savings.what_if_scenarios.yearly_potential || 0)}/year\n\n`;
+        
+        // Add insights
+        csvContent += "FINANCIAL INSIGHTS\n";
+        csvContent += `Overall Health Score,${data.insights.health_score}%\n`;
+        csvContent += `Status,${data.insights.status.replace(/_/g, ' ').toUpperCase()}\n\n`;
+        
+        // Add recommendations
+        csvContent += "RECOMMENDATIONS\n";
+        data.insights.recommendations.forEach(rec => {
+            csvContent += `• ${rec}\n`;
+        });
+        
+        // Encode and create download link
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `budget_plan_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+    }
 
     function updateUIWithData(breakdown, savings, insights) {
         // Format and display budget breakdown
@@ -197,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('yearlyPotential').textContent = '+' + formatCurrency(yearlyIncrease) + '/year';
             
         // Add new what-if information
-        const whatIfSection = document.querySelector('.what-if-calculator');
+        const whatIfSection = document.querySelector('.what-if-scenarios');
         
         // Remove old explanation if it exists
         const oldExplanation = document.querySelector('.what-if-explanation');
@@ -211,7 +358,14 @@ document.addEventListener('DOMContentLoaded', () => {
         explanationDiv.innerHTML = `
             <p class="explanation-text">What would happen if you saved 10% more each month?</p>
         `;
-        whatIfSection.insertBefore(explanationDiv, whatIfSection.firstChild);
+        
+        // Check if explanation already exists
+        const existingExplanation = whatIfSection.querySelector('.what-if-explanation');
+        if (!existingExplanation) {
+            whatIfSection.insertBefore(explanationDiv, whatIfSection.querySelector('.scenario-container'))
+        } else {
+            existingExplanation.replaceWith(explanationDiv);
+        }
         
         // Add detailed what-if information
         const additionalInfo = document.createElement('div');
@@ -224,18 +378,24 @@ document.addEventListener('DOMContentLoaded', () => {
         additionalInfo.innerHTML = `
             <div class="what-if-row">
                 <div class="what-if-title">Time to reach goal:</div>
-                <div class="what-if-value">${monthsToGoal} months</div>
-                <div class="what-if-info" title="Estimated time to reach your emergency fund goal at current saving rate">ⓘ</div>
+                <div class="what-if-value-container">
+                    <div class="what-if-value">${monthsToGoal} months</div>
+                    <div class="what-if-info" title="Estimated time to reach your emergency fund goal at current saving rate">ⓘ</div>
+                </div>
             </div>
             <div class="what-if-row">
                 <div class="what-if-title">With 10% more savings:</div>
-                <div class="what-if-value">${monthsToGoal - monthsSaved} months (save ${monthsSaved} months)</div>
-                <div class="what-if-info" title="You could reach your goal faster by increasing your monthly savings by just 10%">ⓘ</div>
+                <div class="what-if-value-container">
+                    <div class="what-if-value">${monthsToGoal - monthsSaved} months (save ${monthsSaved} months)</div>
+                    <div class="what-if-info" title="You could reach your goal faster by increasing your monthly savings by just 10%">ⓘ</div>
+                </div>
             </div>
             <div class="what-if-row">
                 <div class="what-if-title">Monthly interest earned:</div>
-                <div class="what-if-value">${formatCurrency(monthlyInterest)}</div>
-                <div class="what-if-info" title="Potential interest earned monthly with a 4% annual interest rate">ⓘ</div>
+                <div class="what-if-value-container">
+                    <div class="what-if-value">${formatCurrency(monthlyInterest)}</div>
+                    <div class="what-if-info" title="Potential interest earned monthly with a 4% annual interest rate">ⓘ</div>
+                </div>
             </div>
         `;
         
@@ -267,11 +427,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const moodEl = document.getElementById('budgetMood');
         const moodLabel = document.querySelector('.mood-label');
         const moodInsight = document.querySelector('.mood-insight');
-
-        moodEl.textContent = insights.status === 'excellent' ? '🤑' : 
-                            insights.status === 'on_track' ? '😊' : '🤔';
-        moodLabel.textContent = insights.status === 'excellent' ? 'Excellent progress!' :
-                               insights.status === 'on_track' ? 'On track!' : 'Room for improvement';
+        
+        // Enhanced emoji selection based on health score
+        let emoji, label;
+        if (insights.status === 'excellent') {
+            // For excellent financial standing
+            const greatEmojis = ['🤑', '💰', '💎', '🚀', '🏆'];
+            emoji = greatEmojis[Math.floor(Math.random() * greatEmojis.length)];
+            label = 'Excellent progress!';
+        } else if (insights.status === 'on_track') {
+            // For moderate/on track financial standing
+            const moderateEmojis = ['😊', '👍', '💪', '📈', '✅'];
+            emoji = moderateEmojis[Math.floor(Math.random() * moderateEmojis.length)];
+            label = 'On track!';
+        } else {
+            // For underperforming financial standing
+            const improvementEmojis = ['😬', '🤔', '📊', '⚠️', '🔍'];
+            emoji = improvementEmojis[Math.floor(Math.random() * improvementEmojis.length)];
+            label = 'Room for improvement';
+        }
+        
+        moodEl.textContent = emoji;
+        moodLabel.textContent = label;
 
         // Display insights
         moodInsight.innerHTML = insights.insights.map(insight => `

@@ -4,7 +4,10 @@ import re
 from re import finditer
 import logging
 
-bp = Blueprint('budget', __name__)
+bp = Blueprint('budget', __name__, 
+                  static_folder='static',
+                  template_folder='templates',
+                  static_url_path='')
 
 def format_currency(amount):
     """Format amount as Philippine Peso"""

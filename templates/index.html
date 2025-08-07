@@ -2,48 +2,116 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Budget Buddy</title>
-  <style>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      text-align: center;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-    }
-    #suggestion {
-      margin-top: 20px;
-      font-weight: bold;
-    }
-    select {
-      padding: 10px;
-      font-size: 16px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/insights.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/breakdown.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tips.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h2>Enter your daily budget</h2>
-  <form id="budget-form">
-    <input type="number" id="budget" placeholder="₱100" required>
-    <select id="tipType" required>
-      <option value="breakdown" selected>Budget Breakdown</option>
-      <option value="savings">Money-Saving Tip</option>
-    </select>
-    <select id="duration" required>
-      <option value="daily" selected>Daily</option>
-      <option value="weekly">Weekly</option>
-      <option value="monthly">Monthly</option>
-    </select>
-    <button type="submit">Get Tip</button>
-  </form>
+  <div class="app-header">
+    <h1>Budget Buddy</h1>
+    <p class="subtitle">Smart financial planning made simple</p>
+  </div>
 
-  <p id="suggestion"></p>
+  <div class="app-container">
+    <!-- Left Panel: Budget Input and Breakdown -->
+    <div class="budget-panel">
+      <div class="panel-header">
+        <h2>Plan Your Budget</h2>
+        <p>Enter your budget details below</p>
+      </div>
 
-  <!-- ✅ Load JS properly via Flask -->
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+      <form id="budget-form" class="budget-form">
+        <div class="input-group">
+          <label for="budget">Budget Amount (PHP)</label>
+          <input 
+            type="text" 
+            id="budget" 
+            placeholder="Enter amount (e.g., 1,000)" 
+            pattern="^[0-9,]*\.?[0-9]*$"
+            required
+            autocomplete="off"
+            inputmode="numeric">
+        </div>
+
+        <div class="input-group">
+          <label for="duration">Time Period</label>
+          <select id="duration" required>
+            <option value="daily" selected>Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+
+        <button type="submit" class="submit-btn">Calculate Budget</button>
+      </form>
+
+      <div id="suggestion" class="budget-results"></div>
+    </div>
+
+    <!-- Right Panel: Financial Insights -->
+    <div class="insights-panel">
+      <div class="panel-header">
+        <h2>Financial Insights</h2>
+        <p>Track your progress and potential</p>
+        <button id="export-budget" class="export-btn" disabled>Download Budget Plan</button>
+      </div>
+
+      <div class="insights-content">
+        <div class="savings-forecast">
+          <h3>Savings Forecast</h3>
+          <div class="chart-container">
+            <canvas id="savingsChart"></canvas>
+          </div>
+        </div>
+
+        <div class="emergency-fund">
+          <h3>Emergency Fund Progress</h3>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress" id="emergencyProgress"></div>
+            </div>
+            <div class="progress-labels">
+              <span class="current">Current: ₱0</span>
+              <span class="goal">Goal: ₱50,000</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="what-if-scenarios">
+          <h3>What If Calculator</h3>
+          <div class="scenario-container">
+            <div class="scenario">
+              <label>If you save 10% more:</label>
+              <div class="scenario-result" id="tenPercentMore">+₱0/month</div>
+            </div>
+            <div class="scenario">
+              <label>Yearly potential:</label>
+              <div class="scenario-result" id="yearlyPotential">₱0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="savings-mood">
+          <h3>Budget Health</h3>
+          <div class="mood-indicator">
+            <div class="mood-header">
+              <span class="mood-emoji" id="budgetMood">😊</span>
+              <span class="mood-label">On track!</span>
+            </div>
+            <div class="mood-insight"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

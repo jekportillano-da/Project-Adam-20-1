@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8080:8000"
+    volumes:
+      - ./static:/app/static
+      - ./templates:/app/templates
+    environment:
+      - ENVIRONMENT=development
+    depends_on:
+      - budget-service
+      - savings-service
+      - insights-service
+
+  budget-service:
+    build: ./services/budget-service
+    ports:
+      - "8001:8000"
+    environment:
+      - ENVIRONMENT=development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  savings-service:
+    build: ./services/savings-service
+    ports:
+      - "8002:8000"
+    environment:
+      - ENVIRONMENT=development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  insights-service:
+    build: ./services/insights-service
+    ports:
+      - "8003:8000"
+    environment:
+      - ENVIRONMENT=development
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - BUDGET_SERVICE_URL=http://budget-service:8000
+      - SAVINGS_SERVICE_URL=http://savings-service:8000
+      - INSIGHTS_SERVICE_URL=http://insights-service:8000
+    depends_on:
+      - budget-service
+      - savings-service
+      - insights-service
+
+volumes:
+  redis-data:

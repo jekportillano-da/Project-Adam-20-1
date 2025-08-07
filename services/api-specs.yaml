@@ -1,0 +1,157 @@
+openapi: 3.0.0
+info:
+  title: Smart Budget Assistant API
+  version: 1.0.0
+
+paths:
+  /budget:
+    post:
+      summary: Calculate budget breakdown
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetRequest'
+      responses:
+        '200':
+          description: Budget breakdown calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetBreakdown'
+
+  /savings/forecast:
+    post:
+      summary: Generate savings forecast
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavingsRequest'
+      responses:
+        '200':
+          description: Savings forecast generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavingsForecast'
+
+  /insights:
+    post:
+      summary: Generate budget insights
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightsRequest'
+      responses:
+        '200':
+          description: Insights generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetInsights'
+
+components:
+  schemas:
+    BudgetRequest:
+      type: object
+      required:
+        - amount
+        - duration
+      properties:
+        amount:
+          type: number
+          description: Budget amount
+        duration:
+          type: string
+          enum: [daily, weekly, monthly]
+          description: Budget duration
+
+    BudgetBreakdown:
+      type: object
+      properties:
+        categories:
+          type: object
+          properties:
+            food:
+              type: number
+            transportation:
+              type: number
+            utilities:
+              type: number
+            emergency_fund:
+              type: number
+            discretionary:
+              type: number
+        total_essential:
+          type: number
+        total_savings:
+          type: number
+
+    SavingsRequest:
+      type: object
+      required:
+        - monthly_savings
+        - emergency_fund
+      properties:
+        monthly_savings:
+          type: number
+        emergency_fund:
+          type: number
+        current_goal:
+          type: number
+
+    SavingsForecast:
+      type: object
+      properties:
+        monthly_projections:
+          type: array
+          items:
+            type: number
+        emergency_fund_progress:
+          type: number
+        what_if_scenarios:
+          type: object
+          properties:
+            ten_percent_increase:
+              type: number
+            yearly_potential:
+              type: number
+
+    InsightsRequest:
+      type: object
+      required:
+        - budget_breakdown
+        - savings_data
+      properties:
+        budget_breakdown:
+          $ref: '#/components/schemas/BudgetBreakdown'
+        savings_data:
+          $ref: '#/components/schemas/SavingsForecast'
+
+    BudgetInsights:
+      type: object
+      properties:
+        health_score:
+          type: number
+        status:
+          type: string
+          enum: [excellent, on_track, needs_improvement]
+        insights:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [success, warning, info]
+              message:
+                type: string
+        recommendations:
+          type: array
+          items:
+            type: string

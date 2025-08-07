@@ -97,6 +97,40 @@
 .what-if-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.what-if-title {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.what-if-value {
+    color: var(--money-color);
+    font-size: 0.9rem;
+}
+
+.what-if-info {
+    color: var(--accent-color);
+    cursor: help;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+}
+
+.what-if-bottom-note {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    font-style: italic;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 0.5rem;
+}
+
+.what-if-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
     padding: 0.25rem 0;
@@ -112,6 +146,12 @@
     flex: 1;
 }
 
+.what-if-value-container {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
 .what-if-value {
     font-weight: 500;
     color: var(--primary-color);
@@ -122,15 +162,7 @@
     color: var(--accent-color);
     cursor: help;
     font-size: 0.9rem;
-}
-
-.what-if-bottom-note {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    padding: 0.75rem;
-    background: rgba(98, 182, 203, 0.1);
-    border-radius: var(--border-radius);
-    color: var(--text-color);
+    display: inline-flex;
 }
 
 .what-if-bottom-note p {
