@@ -1,0 +1,638 @@
+/* Bills Page Styles */
+.app-container {
+    display: grid;
+    grid-template-columns: minmax(350px, 1fr) 2fr;
+    gap: var(--spacing);
+}
+
+/* Toast Notification */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--success-color);
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 500;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 300px;
+    text-align: center;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.bills-panel {
+    background: var(--card-background);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: var(--spacing);
+    display: flex;
+    flex-direction: column;
+}
+
+.bills-overview-panel {
+    background: var(--card-background);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: var(--spacing);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Bill Form Styles */
+.bill-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+/* Bills List Styles */
+.bills-list-container {
+    margin-top: 2rem;
+}
+
+.bills-list-container h3 {
+    margin-bottom: 1rem;
+}
+
+.bills-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.empty-message {
+    font-style: italic;
+    color: var(--text-light);
+    padding: 1rem;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    text-align: center;
+}
+
+.bill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--border-radius);
+    background-color: var(--background-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bill-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.bill-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.bill-name {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.bill-category {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.bill-amount {
+    font-weight: 500;
+    color: var(--money-color);
+}
+
+.bill-due {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 0.25rem;
+}
+
+.bill-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.bill-edit, .bill-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    color: var(--text-light);
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.bill-edit:hover {
+    color: var(--accent-color);
+    background-color: rgba(98, 182, 203, 0.1);
+}
+
+.bill-delete:hover {
+    color: var(--danger-color);
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.bills-summary {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.total-bills {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-weight: 500;
+}
+
+.total-amount {
+    color: var(--money-color);
+}
+
+/* Chart Styles */
+.chart-options {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    z-index: 500;
+}
+
+.toggle-checkbox {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+    position: absolute;
+}
+
+.toggle-label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+}
+
+.toggle-label::before {
+    content: '';
+    width: 36px;
+    height: 18px;
+    background: #ccc;
+    display: inline-block;
+    border-radius: 18px;
+    margin-right: 8px;
+    position: relative;
+    transition: background-color 0.2s;
+}
+
+.toggle-label::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    left: 2px;
+    transition: left 0.2s;
+}
+
+.toggle-checkbox:checked + .toggle-label::before {
+    background: var(--primary-color);
+}
+
+.toggle-checkbox:checked + .toggle-label::after {
+    left: 20px;
+}
+
+.chart-container {
+    height: 300px;
+    margin-bottom: 2rem;
+    position: relative;
+    width: 100%;
+    min-height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#billsChart {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.center-text-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--text-color);
+}
+
+.center-text-label {
+    font-size: 0.875rem;
+    color: var(--secondary-text-color);
+    font-family: 'Open Sans', sans-serif;
+}
+
+.chart-error {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 0, 0, 0.05);
+    border: 1px dashed #ffcccc;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    color: #d32f2f;
+}
+
+/* Custom chart legend styles */
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.chart-legend-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+}
+
+.chart-legend-icon svg {
+    color: inherit;
+}
+
+.chart-legend-text {
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+.custom-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+}
+
+.legend-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legend-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.legend-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.chart-placeholder {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.empty-chart-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-light);
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+.donut-chart-placeholder {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.donut-chart-placeholder svg {
+    margin-bottom: 1rem;
+    animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.placeholder-text {
+    position: relative;
+    text-align: center;
+}
+
+.placeholder-text h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.empty-chart-message p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--text-light);
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+/* Timeline Styles */
+.timeline-container {
+    margin-bottom: 3rem;
+    margin-top: 1.5rem;
+    position: relative;
+}
+
+.timeline-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.timeline-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 0;
+    position: relative;
+    width: 100%;
+    z-index: 5;
+}
+
+.timeline-day {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    position: absolute;
+    transform: translateX(-50%);
+    font-weight: 500;
+}
+
+/* Position the timeline day markers precisely */
+.timeline-scale .timeline-day:nth-child(1) { left: 0; }
+.timeline-scale .timeline-day:nth-child(2) { left: 13.33%; } /* Day 5 */
+.timeline-scale .timeline-day:nth-child(3) { left: 30%; } /* Day 10 */
+.timeline-scale .timeline-day:nth-child(4) { left: 46.67%; } /* Day 15 */
+.timeline-scale .timeline-day:nth-child(5) { left: 63.33%; } /* Day 20 */
+.timeline-scale .timeline-day:nth-child(6) { left: 80%; } /* Day 25 */
+.timeline-scale .timeline-day:nth-child(7) { left: 100%; transform: translateX(-100%); } /* Day 30 */
+
+/* Add tick marks for better visual reference */
+.timeline-scale .timeline-day::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 4px;
+    width: 1px;
+    background-color: var(--text-light);
+}
+
+.timeline-markers {
+    position: relative;
+    height: 100px;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    margin-top: 1.5rem;
+    /* Add a horizontal line through the middle of the timeline */
+    display: flex;
+    align-items: center;
+    z-index: 1;
+    background-image: linear-gradient(90deg, 
+                      transparent 0%, transparent calc(13.33% - 1px), rgba(0, 0, 0, 0.05) 13.33%, transparent calc(13.33% + 1px), 
+                      transparent calc(30% - 1px), rgba(0, 0, 0, 0.05) 30%, transparent calc(30% + 1px),
+                      transparent calc(46.67% - 1px), rgba(0, 0, 0, 0.05) 46.67%, transparent calc(46.67% + 1px),
+                      transparent calc(63.33% - 1px), rgba(0, 0, 0, 0.05) 63.33%, transparent calc(63.33% + 1px),
+                      transparent calc(80% - 1px), rgba(0, 0, 0, 0.05) 80%, transparent calc(80% + 1px));
+}
+
+.timeline-markers::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: translateY(-50%);
+}
+
+/* Today marker on timeline */
+.today-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--accent-color);
+    z-index: 3;
+}
+
+.today-marker::before {
+    content: 'TODAY';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-24px);
+    background-color: var(--accent-color);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.no-dates {
+    width: 100%;
+    text-align: center;
+    color: var(--text-light);
+    padding: 1.5rem 0;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+/* Timeline date group for multiple bills on the same date */
+.timeline-date-group {
+    position: absolute;
+    height: 100%;
+    width: 20px;
+    /* Center the marker on the timeline position */
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--accent-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* For single markers, center them on the day mark */
+    margin-left: -6px;
+}
+
+.timeline-marker:hover {
+    transform: translateY(-50%) scale(1.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.timeline-marker::after {
+    content: attr(data-name) " (" attr(data-date) ")";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.timeline-marker::before {
+    content: attr(data-amount);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: white;
+    background-color: var(--money-color);
+    padding: 4px 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.timeline-marker:hover::after,
+.timeline-marker:hover::before {
+    opacity: 1;
+}
+
+/* Tips Section */
+.bills-tips {
+    margin-top: 2rem;
+}
+
+.tip {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.tip-icon {
+    font-size: 1.5rem;
+}
+
+.tip-content p {
+    margin: 0;
+    color: var(--text-color);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .app-container {
+        grid-template-columns: 1fr;
+    }
+}

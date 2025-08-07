@@ -1,0 +1,142 @@
+/* Budget and Bills Integration Styles */
+
+.bills-integration-note {
+    background: linear-gradient(135deg, #e8f5e8, #f0f9ff);
+    border: 1px solid #22c55e;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #065f46;
+    font-weight: 500;
+    text-align: center;
+}
+
+.breakdown-list .actual-bill {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    border-left: 3px solid #22c55e;
+    padding-left: 12px;
+    margin: 4px 0;
+    border-radius: 0 6px 6px 0;
+    position: relative;
+}
+
+.breakdown-list .calculated {
+    background: rgba(156, 163, 175, 0.1);
+    border-left: 3px solid #9ca3af;
+    padding-left: 12px;
+    margin: 4px 0;
+    border-radius: 0 6px 6px 0;
+}
+
+.bill-indicator {
+    margin-left: 8px;
+    font-size: 12px;
+    opacity: 0.8;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 0.8; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1; 
+        transform: scale(1.1);
+    }
+}
+
+.bills-tip {
+    background: linear-gradient(135deg, #fef3c7, #fef7cd);
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 16px 0 0 0;
+    font-size: 13px;
+    color: #92400e;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.bills-tip a:hover {
+    text-decoration: underline !important;
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .bills-integration-note,
+    .bills-tip {
+        font-size: 12px;
+        padding: 10px;
+        margin: 12px 0;
+    }
+    
+    .bill-indicator {
+        font-size: 10px;
+    }
+}
+
+/* Enhanced breakdown list styling */
+.breakdown-list li {
+    transition: all 0.2s ease;
+}
+
+.breakdown-list .actual-bill:hover {
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.08));
+    transform: translateX(2px);
+}
+
+.breakdown-list .calculated:hover {
+    background: rgba(156, 163, 175, 0.15);
+    transform: translateX(1px);
+}
+
+/* Legend for actual vs calculated */
+.budget-breakdown h3 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.breakdown-legend {
+    display: flex;
+    gap: 15px;
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--text-secondary, #6b7280);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.legend-actual {
+    background: #22c55e;
+}
+
+.legend-calculated {
+    background: #9ca3af;
+}
+
+@media (max-width: 600px) {
+    .budget-breakdown h3 {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .breakdown-legend {
+        gap: 10px;
+    }
+}

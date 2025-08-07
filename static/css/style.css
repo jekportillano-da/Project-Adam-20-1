@@ -43,7 +43,7 @@
     --border-radius: 8px;
     --spacing: 20px;
     --panel-width: 400px;
-    --header-height: 80px;
+    --header-height: 90px;
 }
 
 * {
@@ -60,7 +60,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
     background-color: var(--background-color);
@@ -72,6 +72,7 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
     color: var(--primary-color);
     margin-bottom: var(--spacing-sm);
 }
@@ -100,8 +101,128 @@ p {
     height: var(--header-height);
     background-color: var(--primary-color);
     color: white;
-    padding: 1rem var(--spacing);
+    padding: 0;
     text-align: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 900;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-header h1 {
+    color: white;
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: 0.8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.app-header .subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Open Sans', 'Segoe UI', sans-serif;
+    font-weight: 300;
+    font-size: 1.1rem;
+    margin: 0.3rem 0 0 0;
+    padding: 0;
+    letter-spacing: 0.5px;
+    font-style: italic;
+    line-height: 1.2;
+}
+
+/* Profile Icon and Dropdown Styles */
+.profile-container {
+    position: absolute;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
+    z-index: 950;
+}
+
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.profile-icon:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.profile-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: white;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 200px;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    z-index: 9999;
+    margin-top: 0.5rem;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.menu-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+    background-color: var(--background-color);
+}
+
+.menu-item.active {
+    background-color: rgba(98, 182, 203, 0.1);
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.menu-item.disabled {
+    color: var(--text-light);
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .app-container {
@@ -109,16 +230,24 @@ p {
     display: flex;
     gap: var(--spacing);
     padding: var(--spacing);
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: calc(100vh - var(--header-height));
+    align-items: flex-start;
+    justify-content: center;
 }
 
 .budget-panel {
-    width: var(--panel-width);
+    flex: 0 1 400px;
+    min-width: 300px;
+    max-width: 500px;
     background: var(--card-background);
     border-radius: var(--border-radius);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: var(--spacing);
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 }
 
 .insights-panel {
@@ -134,11 +263,14 @@ p {
 .panel-header {
     margin-bottom: var(--spacing);
     position: relative; /* Added for positioning export button */
+    word-wrap: break-word; /* Ensures text wraps properly */
 }
 
 .panel-header h2 {
     color: var(--primary-color);
     margin: 0 0 0.5rem;
+    font-size: 1.6rem; /* Adjusted size for better fit */
+    line-height: 1.2; /* Improved line height */
 }
 
 .panel-header p {
@@ -171,17 +303,26 @@ h1 {
     border-radius: var(--border-radius);
     box-shadow: 0 4px 16px rgba(27, 73, 101, 0.08);
     border: 1px solid var(--border-color);
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    width: 100%;
+    max-width: 350px;
+    align-items: center;
 }
 
 label {
     font-weight: 500;
     color: var(--text-color);
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.25rem;
 }
 
 input, select {
@@ -190,6 +331,10 @@ input, select {
     border-radius: var(--border-radius);
     font-size: 16px;
     transition: all 0.3s ease;
+    width: 100%;
+    max-width: 280px;
+    text-align: left;
+    box-sizing: border-box;
 }
 
 input:focus, select:focus {
@@ -211,6 +356,9 @@ input:focus, select:focus {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     box-shadow: 0 2px 8px rgba(27, 73, 101, 0.2);
+    width: 100%;
+    max-width: 280px;
+    align-self: center;
 }
 
 .submit-btn:hover {
@@ -282,20 +430,50 @@ input:focus, select:focus {
     }
 }
 
-@media (min-width: 768px) {
-    .budget-form {
-        flex-direction: row;
-        flex-wrap: wrap;
-        align-items: flex-end;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
     }
-
-    .input-group {
+    
+    .budget-panel {
         flex: 1;
-        min-width: 200px;
+        min-width: auto;
+        width: 100%;
+        max-width: none;
     }
+    
+    .input-group {
+        max-width: none;
+    }
+    
+    input, select, .submit-btn {
+        max-width: none;
+    }
+}
 
-    .submit-btn {
-        margin-top: 1.5rem;
+@media (min-width: 769px) and (max-width: 1024px) {
+    .app-container {
+        justify-content: center;
+        padding: var(--spacing-md);
+    }
+    
+    .budget-panel {
+        flex: 0 1 450px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .app-container {
+        justify-content: center;
+        padding: var(--spacing-lg);
+        gap: var(--spacing-xl);
+    }
+    
+    .budget-panel {
+        flex: 0 1 400px;
     }
 }
 
@@ -303,25 +481,44 @@ input:focus, select:focus {
     display: none;
 }
 
-/* Responsive Design */
-@media (min-width: 768px) {
-    .budget-form {
-        flex-direction: row;
-        align-items: flex-end;
-        flex-wrap: wrap;
-    }
-
-    .input-group {
-        flex: 1;
-        min-width: 200px;
-    }
-
-    .submit-btn {
-        align-self: flex-end;
-    }
+/* Center alignment utilities */
+.text-center {
+    text-align: center;
 }
 
-/* Loading State */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Override any conflicting styles from other CSS files */
+.budget-panel .panel-header {
+    text-align: center;
+    width: 100%;
+}
+
+.budget-panel .panel-header h2,
+.budget-panel .panel-header p {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Ensure input content is left-aligned while container is centered */
+.input-group input,
+.input-group select {
+    text-align: left !important;
+    direction: ltr !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+.input-group input::placeholder {
+    text-align: left !important;
+}
+
+/* Loading States */
 .submit-btn[disabled] {
     background-color: #ccc;
     cursor: not-allowed;

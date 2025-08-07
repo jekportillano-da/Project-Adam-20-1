@@ -1,0 +1,68 @@
+/* Additional fixes for the budget form alignment */
+.budget-panel .panel-header h2,
+.budget-panel .panel-header p {
+    text-align: left;
+}
+
+.budget-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.budget-form .input-group {
+    text-align: left;
+    width: 100%;
+    align-self: flex-start;
+}
+
+.budget-form .input-group label,
+.budget-form .input-group input,
+.budget-form .input-group select {
+    text-align: left;
+    width: 100%;
+    display: block;
+    margin: 0;
+    max-width: 100%;
+    text-align-last: left;
+}
+
+.budget-form input[type="text"] {
+    text-align: left !important;
+    text-indent: 0 !important;
+}
+
+.budget-form select {
+    text-align: left !important;
+    text-indent: 0 !important;
+    padding-left: 10px !important;
+}
+
+/* Fix for input field text */
+#budget, #duration {
+    text-align: left !important;
+    direction: ltr !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+input[type="text"]::placeholder {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+/* Style for the placeholder text */
+::placeholder {
+    text-align: left !important;
+    opacity: 0.7;
+}
+
+/* Ensure proper alignment of all form content */
+.budget-panel .panel-header,
+.budget-panel .budget-form,
+.budget-panel .input-group,
+.budget-panel input,
+.budget-panel select {
+    text-align: left;
+}

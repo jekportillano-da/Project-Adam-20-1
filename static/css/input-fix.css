@@ -1,0 +1,23 @@
+/* Direct override styles to ensure left alignment */
+.budget-panel input[type="text"],
+.budget-panel select {
+    text-align: left !important;
+}
+
+#budget {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+#duration {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+.input-group input,
+.input-group select {
+    text-align: left !important;
+    text-align-last: left !important;
+    -moz-text-align-last: left !important;
+    -ms-text-align-last: left !important;
+}

@@ -163,3 +163,7 @@ async def what_if_explanation():
             "months_with_increase": "(goal_amount - current_amount) / (monthly_savings * 1.1)"
         }
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8082)

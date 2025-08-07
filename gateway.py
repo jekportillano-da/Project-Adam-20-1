@@ -79,9 +79,9 @@ async def prevent_directory_listing(request: Request, call_next):
 
 # Microservice URLs
 SERVICES = {
-    "budget": "http://localhost:8001",
-    "savings": "http://localhost:8002",
-    "insights": "http://localhost:8003"
+    "budget": "http://localhost:8081",
+    "savings": "http://localhost:8082",
+    "insights": "http://localhost:8083"
 }
 
 @app.get("/", response_class=HTMLResponse)
@@ -95,7 +95,7 @@ async def home(request: Request):
         if not index_file.exists():
             logger.error(f"index.html not found at {index_file}")
             raise HTTPException(status_code=500, detail=f"Template file not found")
-            
+        
         # Read the file content directly
         with open(index_file, "r", encoding="utf-8") as f:
             html_content = f.read()
@@ -122,6 +122,10 @@ async def home(request: Request):
             '/static/css/tips.css'
         )
         html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'js/dropdown.js\') }}', 
+            '/static/js/dropdown.js?v=' + str(int(time.time()))  # Add timestamp to bust cache
+        )
+        html_content = html_content.replace(
             '{{ url_for(\'static\', filename=\'js/script.js\') }}', 
             '/static/js/script.js?v=' + str(int(time.time()))  # Add timestamp to bust cache
         )
@@ -135,8 +139,265 @@ async def home(request: Request):
         response.headers["Expires"] = "0"
         return response
     except Exception as e:
-        logger.error(f"Error rendering template: {str(e)}")
+        logger.error(f"Error serving index.html: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error")
+
+@app.get("/bills", response_class=HTMLResponse)
+async def bills(request: Request):
+    """Serve the bills.html page"""
+    try:
+        logger.debug(f"Templates directory: {TEMPLATES_DIR}")
+        bills_file = TEMPLATES_DIR / "bills.html"
+        logger.debug(f"Checking if bills.html exists: {bills_file.exists()}")
+        
+        if not bills_file.exists():
+            logger.error(f"bills.html not found at {bills_file}")
+            raise HTTPException(status_code=500, detail=f"Template file not found")
+            
+        # Read the file content directly
+        with open(bills_file, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        
+        # Process the template manually to replace url_for tags
+        html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'css/style.css\') }}', 
+            '/static/css/style.css'
+        )
+        html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'css/components.css\') }}', 
+            '/static/css/components.css'
+        )
+        html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'css/bills.css\') }}', 
+            '/static/css/bills.css'
+        )
+        html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'js/dropdown.js\') }}', 
+            '/static/js/dropdown.js?v=' + str(int(time.time()))
+        )
+        html_content = html_content.replace(
+            '{{ url_for(\'static\', filename=\'js/bills.js\') }}', 
+            '/static/js/bills.js?v=' + str(int(time.time()))
+        )
+
+        # Create a plain HTML response
+        response = HTMLResponse(content=html_content)
+        
+        # Add cache control headers
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+    except Exception as e:
+        logger.error(f"Error rendering bills template: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Specific API routes MUST come before the generic proxy route
+@app.post("/api/tip")
+async def get_budget_tip(request: Request):
+    """Generate budget tip using Groq AI"""
+    try:
+        # Import here to avoid dependency issues
+        import os
+        from openai import OpenAI
+        import json
+        from dotenv import load_dotenv
+        
+        # Load environment variables
+        load_dotenv()
+        
+        # Get request data
+        data = await request.json()
+        budget = float(str(data.get('budget', '')).replace(',', ''))
+        duration = data.get('duration', 'daily')
+        
+        # Validate budget
+        if budget <= 0:
+            return {"tip": "Please enter a positive amount"}
+        if budget > 1000000:
+            return {"tip": "Amount cannot exceed PHP 1,000,000"}
+            
+        # Convert to daily budget
+        if duration == 'weekly':
+            daily_budget = round(budget / 7, 2)
+        elif duration == 'monthly':
+            daily_budget = round(budget / 30, 2)
+        else:  # daily
+            daily_budget = budget
+            
+        # Initialize Groq client
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            logger.error("Groq API key not found")
+            return {"tip": "AI service not configured. Please add your Groq API key."}
+            
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        
+        # Determine budget level
+        budget_level = 'low' if daily_budget < 500 else 'medium' if daily_budget < 1000 else 'high'
+        
+        # Get AI budget allocations
+        allocation_prompt = f"""As a financial advisor, analyze this budget and return ONLY a JSON object containing recommended percentage allocations.
+        Daily budget: PHP {daily_budget:.2f}
+        Budget level: {budget_level}
+        
+        Rules:
+        - Total must equal 100
+        - Categories must include: Food, Transportation, Utilities, Emergency Fund, Discretionary
+        - For {budget_level} budgets, follow these guidelines:
+          low: Essentials 70-80%, Emergency 10-15%, Rest discretionary
+          medium: Essentials 60-70%, Emergency 15-20%, Rest discretionary
+          high: Essentials 50-60%, Emergency 20-25%, Rest discretionary/investments
+        
+        Return ONLY a JSON object like:
+        {{"Food": 30, "Transportation": 20, "Utilities": 20, "Emergency Fund": 20, "Discretionary": 10}}"""
+
+        try:
+            # Get allocations from AI
+            response = client.chat.completions.create(
+                model="llama3-70b-8192",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a financial allocation expert. Respond only with a valid JSON object containing percentage allocations that sum to 100."
+                    },
+                    {
+                        "role": "user",
+                        "content": allocation_prompt
+                    }
+                ],
+                temperature=0.2,
+                max_tokens=200
+            )
+            
+            if response.choices and response.choices[0].message.content:
+                allocations = json.loads(response.choices[0].message.content)
+                if not isinstance(allocations, dict) or sum(allocations.values()) != 100:
+                    raise ValueError("Invalid allocation response")
+            else:
+                raise ValueError("No response from AI")
+                
+        except Exception as e:
+            logger.warning(f"AI allocation failed, using fallback: {str(e)}")
+            # Fallback allocations
+            if budget_level == 'low':
+                allocations = {"Food": 40, "Transportation": 20, "Utilities": 15, "Emergency Fund": 15, "Discretionary": 10}
+            elif budget_level == 'medium':
+                allocations = {"Food": 35, "Transportation": 15, "Utilities": 15, "Emergency Fund": 20, "Discretionary": 15}
+            else:
+                allocations = {"Food": 30, "Transportation": 15, "Utilities": 15, "Emergency Fund": 25, "Discretionary": 15}
+        
+        # Calculate breakdown
+        breakdown = {category: (percentage / 100.0) * daily_budget for category, percentage in allocations.items()}
+        
+        # Get AI tips
+        tips_prompt = f"""Give 3 practical money-saving tips for someone in the Philippines with:
+Daily budget: PHP {daily_budget:.2f}
+Spending breakdown:
+{json.dumps(breakdown, indent=2)}
+
+Return ONLY a JSON array of 3 objects, each with:
+- title: The tip title
+- action: One specific, actionable step
+- savings: Expected savings range in PHP (X.XX-Y.YY format)
+
+Example:
+[
+  {{
+    "title": "Smart Grocery Shopping",
+    "action": "Buy fresh produce from wet markets early morning",
+    "savings": "50.00-100.00"
+  }}
+]"""
+
+        try:
+            # Get tips from AI
+            tips_response = client.chat.completions.create(
+                model="llama3-70b-8192",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a local financial advisor in the Philippines. Return only valid JSON arrays of money-saving tips."
+                    },
+                    {
+                        "role": "user",
+                        "content": tips_prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=500
+            )
+            
+            if tips_response.choices and tips_response.choices[0].message.content:
+                tips = json.loads(tips_response.choices[0].message.content)
+                if not isinstance(tips, list) or len(tips) != 3:
+                    raise ValueError("Invalid tips format")
+            else:
+                raise ValueError("No tips response from AI")
+                
+        except Exception as e:
+            logger.warning(f"AI tips failed, using fallback: {str(e)}")
+            # Fallback tips
+            tips = [
+                {
+                    "title": "Smart Grocery Shopping",
+                    "action": "Buy fresh produce from local markets early morning",
+                    "savings": "50.00-100.00"
+                },
+                {
+                    "title": "Transportation Planning",
+                    "action": "Use public transport during off-peak hours",
+                    "savings": "20.00-50.00"
+                },
+                {
+                    "title": "Utility Savings",
+                    "action": "Use natural lighting and ventilation when possible",
+                    "savings": "100.00-200.00"
+                }
+            ]
+        
+        # Format response
+        essential_categories = ['Food', 'Transportation', 'Utilities']
+        essentials_total = sum(breakdown[cat] for cat in essential_categories if cat in breakdown)
+        
+        response_lines = [
+            "📊 Budget Analysis",
+            f"Daily Budget: PHP {daily_budget:.2f}",
+            "",
+            "💰 Smart Budget Breakdown:",
+            *[f"{cat}: PHP {amount:.2f}" for cat, amount in breakdown.items() if cat in essential_categories],
+            f"Total Essential Expenses: PHP {essentials_total:.2f}",
+            "",
+            "🎯 Savings and Goals:",
+            f"Emergency Fund: PHP {breakdown.get('Emergency Fund', 0):.2f}",
+            f"Discretionary: PHP {breakdown.get('Discretionary', 0):.2f}",
+            "",
+            "💡 AI-Generated Money-Saving Tips:"
+        ]
+        
+        for i, tip in enumerate(tips, 1):
+            response_lines.extend([
+                f"{i}. {tip['title']}",
+                f"• {tip['action']}",
+                f"• Expected savings: PHP {tip['savings']}",
+                ""
+            ])
+        
+        # Remove last empty line
+        if response_lines[-1] == "":
+            response_lines.pop()
+            
+        tip_text = "\n".join(response_lines)
+        
+        logger.info("Successfully generated AI budget tip")
+        return {"tip": tip_text}
+        
+    except Exception as e:
+        logger.error(f"Error in budget tip endpoint: {str(e)}")
+        return {"tip": f"AI service error: {str(e)}"}
 
 @app.api_route("/api/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_to_service(service: str, path: str, request: Request):
@@ -210,9 +471,14 @@ async def test_services():
     return results
 
 # This catch-all route must be AFTER all other routes to avoid conflicts
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"])
+# Only handle non-API routes to avoid interfering with API routing
+@app.api_route("/{path:path}", methods=["GET", "OPTIONS", "HEAD"])
 async def catch_all(request: Request, path: str):
     """Catch-all route to prevent directory listing"""
+    # Exclude API routes from catch-all
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404, detail=f"API endpoint not found: {path}")
+    
     logger.debug(f"Caught unhandled path: {path}")
     
     # Special case for the root path with trailing slash

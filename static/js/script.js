@@ -157,35 +157,45 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Please enter a valid budget amount');
             }
 
-            // Get budget breakdown
-            const breakdownData = await fetchFromAPI('http://localhost:8001/calculate', {
+            // Show AI loading state
+            showAILoading();
+
+            // First, get AI-powered budget tips from GROQ
+            const aiTipsData = await fetchFromAPI('/api/tip', {
+                budget: cleanBudget,
+                duration: duration
+            });
+
+            // Get budget breakdown through gateway
+            const breakdownData = await fetchFromAPI('/api/budget/calculate', {
                 amount: cleanBudget,
                 duration
             });
 
-            // Calculate savings forecast
-            const savingsData = await fetchFromAPI('http://localhost:8002/forecast', {
+            // Calculate savings forecast through gateway
+            const savingsData = await fetchFromAPI('/api/savings/forecast', {
                 monthly_savings: breakdownData.total_savings,
                 emergency_fund: breakdownData.categories.emergency_fund,
                 current_goal: 50000
             });
 
-            // Get financial insights
-            const insightsData = await fetchFromAPI('http://localhost:8003/analyze', {
+            // Get financial insights through gateway
+            const insightsData = await fetchFromAPI('/api/insights/analyze', {
                 budget_breakdown: breakdownData,
                 savings_data: savingsData
             });
 
-            // Update UI with all data
-            updateUIWithData(breakdownData, savingsData, insightsData);
+            // Update UI with all data including AI tips
+            updateUIWithData(breakdownData, savingsData, insightsData, aiTipsData);
             
-            // Store data for export
+            // Store data for export including AI tips
             currentBudgetData = {
                 budget: cleanBudget,
                 duration: duration,
                 breakdown: breakdownData,
                 savings: savingsData,
                 insights: insightsData,
+                aiTips: aiTipsData,
                 timestamp: new Date().toISOString()
             };
             
@@ -263,19 +273,70 @@ document.addEventListener('DOMContentLoaded', () => {
         csvContent += `Amount,${formatNumberForCSV(data.budget)}\n`;
         csvContent += `Time Period,${data.duration.charAt(0).toUpperCase() + data.duration.slice(1)}\n\n`;
         
-        // Add budget breakdown
-        csvContent += "BUDGET BREAKDOWN\n";
-        csvContent += "Category,Amount\n";
+        // Add budget breakdown with bills integration
+        csvContent += "COMPREHENSIVE BUDGET BREAKDOWN\n";
+        csvContent += "Category,Amount,Source\n";
         
-        for (let category in data.breakdown.categories) {
-            const formattedCategory = category.split('_')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-            csvContent += `${formattedCategory},${formatNumberForCSV(data.breakdown.categories[category])}\n`;
+        const { billsByCategory, totalBills } = getBillsByCategory();
+        const allCategories = [
+            'housing', 'food', 'transportation', 'utilities',
+            'entertainment', 'insurance', 'subscriptions', 'other'
+        ];
+        
+        // Track total essential with bills integration
+        let csvTotalEssential = data.breakdown.total_essential || 0;
+        
+        allCategories.forEach(category => {
+            let amount = data.breakdown.categories[category] || 0;
+            let source = 'Calculated';
+            
+            // Use actual bill amount if available
+            if (billsByCategory[category]) {
+                amount = billsByCategory[category];
+                source = 'Actual Bills';
+            }
+            
+            // Only include categories with amounts
+            if (amount > 0) {
+                const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1);
+                csvContent += `${formattedCategory},${formatNumberForCSV(amount)},${source}\n`;
+            }
+        });
+        
+        // Adjust total essential if bills are integrated
+        if (totalBills > 0) {
+            const transportationBills = billsByCategory.transportation || 0;
+            const utilitiesBills = billsByCategory.utilities || 0;
+            const calculatedTransportation = data.breakdown.categories.transportation || 0;
+            const calculatedUtilities = data.breakdown.categories.utilities || 0;
+            
+            csvTotalEssential = csvTotalEssential - calculatedTransportation - calculatedUtilities + totalBills;
         }
         
-        csvContent += `Total Essential Expenses,${formatNumberForCSV(data.breakdown.total_essential)}\n`;
-        csvContent += `Total Savings,${formatNumberForCSV(data.breakdown.total_savings)}\n\n`;
+        // Add savings categories
+        for (let category in data.breakdown.categories) {
+            if (['emergency_fund', 'discretionary'].includes(category)) {
+                const formattedCategory = category.split('_')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+                csvContent += `${formattedCategory},${formatNumberForCSV(data.breakdown.categories[category])},Calculated\n`;
+            }
+        }
+        
+        csvContent += `Total Essential Expenses,${formatNumberForCSV(csvTotalEssential)},${totalBills > 0 ? 'Bills Integrated' : 'Calculated'}\n`;
+        csvContent += `Total Savings,${formatNumberForCSV(data.breakdown.total_savings)},Calculated\n`;
+        
+        if (totalBills > 0) {
+            csvContent += `\nACTUAL BILLS INTEGRATION\n`;
+            csvContent += `Total Bills Amount,${formatNumberForCSV(totalBills)}\n`;
+            csvContent += "Bill Category,Amount\n";
+            for (let category in billsByCategory) {
+                const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1);
+                csvContent += `${formattedCategory},${formatNumberForCSV(billsByCategory[category])}\n`;
+            }
+        }
+        
+        csvContent += "\n";
         
         // Add savings forecast
         csvContent += "SAVINGS FORECAST\n";
@@ -320,19 +381,29 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     }
 
-    function updateUIWithData(breakdown, savings, insights) {
-        // Format and display budget breakdown
+    function updateUIWithData(breakdown, savings, insights, aiTips) {
+        // Format and display budget breakdown (without AI tips - they go in right panel now)
         const breakdownHTML = formatBreakdown(breakdown);
         suggestionBox.innerHTML = breakdownHTML;
+        
+        // Update AI insights in the right panel
+        updateAIInsights(aiTips);
         
         // Update savings chart
         savingsChart.data.datasets[0].data = savings.monthly_projections;
         savingsChart.update();
 
         // Update emergency fund progress
-        document.getElementById('emergencyProgress').style.width = savings.emergency_fund_progress + '%';
-        document.querySelector('.emergency-fund .current').textContent = 
-            'Current: ' + formatCurrency(breakdown.categories.emergency_fund);
+        const emergencyProgressEl = document.getElementById('emergencyProgress');
+        if (emergencyProgressEl) {
+            emergencyProgressEl.style.width = savings.emergency_fund_progress + '%';
+        }
+        
+        const emergencyCurrentEl = document.querySelector('.emergency-fund-compact .current') || 
+                                  document.querySelector('.emergency-fund .current');
+        if (emergencyCurrentEl) {
+            emergencyCurrentEl.textContent = 'Current: ' + formatCurrency(breakdown.categories.emergency_fund);
+        }
 
         // Update what-if scenarios - handle both old and new field names for compatibility
         const monthlyIncrease = savings.what_if_scenarios.monthly_10pct_more || 
@@ -340,8 +411,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const yearlyIncrease = savings.what_if_scenarios.yearly_10pct_more || 
                                savings.what_if_scenarios.yearly_potential || 0;
         
-        document.getElementById('tenPercentMore').textContent = '+' + formatCurrency(monthlyIncrease) + '/month';
-        document.getElementById('yearlyPotential').textContent = '+' + formatCurrency(yearlyIncrease) + '/year';
+        const tenPercentMoreEl = document.getElementById('tenPercentMore');
+        const yearlyPotentialEl = document.getElementById('yearlyPotential');
+        
+        if (tenPercentMoreEl) {
+            tenPercentMoreEl.textContent = '+' + formatCurrency(monthlyIncrease) + '/month';
+        }
+        if (yearlyPotentialEl) {
+            yearlyPotentialEl.textContent = '+' + formatCurrency(yearlyIncrease) + '/year';
+        }
             
         // Add new what-if information
         const whatIfSection = document.querySelector('.what-if-scenarios');
@@ -423,48 +501,324 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.what-if-bottom-note').replaceWith(bottomExplanation);
         }
 
-        // Update mood and insights
+        // Update mood and insights with AI integration
+        updateBudgetHealthWithAI(insights, aiTips, breakdown, savings);
+    }
+
+    // Enhanced AI-powered budget health analysis
+    function updateBudgetHealthWithAI(insights, aiTips, breakdown, savings) {
         const moodEl = document.getElementById('budgetMood');
         const moodLabel = document.querySelector('.mood-label');
         const moodInsight = document.querySelector('.mood-insight');
         
-        // Enhanced emoji selection based on health score
-        let emoji, label;
+        // Enhanced emoji selection based on health score with AI context
+        let emoji, label, aiHealthInsight;
+        
+        // Extract AI insights for health analysis
+        const aiContext = aiTips && aiTips.tip ? aiTips.tip : '';
+        const savingsRate = (breakdown.total_savings / (breakdown.total_essential + breakdown.total_savings)) * 100;
+        const emergencyFundProgress = savings.emergency_fund_progress || 0;
+        
         if (insights.status === 'excellent') {
-            // For excellent financial standing
             const greatEmojis = ['🤑', '💰', '💎', '🚀', '🏆'];
             emoji = greatEmojis[Math.floor(Math.random() * greatEmojis.length)];
             label = 'Excellent progress!';
+            aiHealthInsight = generateAIHealthInsight('excellent', savingsRate, emergencyFundProgress, aiContext);
         } else if (insights.status === 'on_track') {
-            // For moderate/on track financial standing
             const moderateEmojis = ['😊', '👍', '💪', '📈', '✅'];
             emoji = moderateEmojis[Math.floor(Math.random() * moderateEmojis.length)];
             label = 'On track!';
+            aiHealthInsight = generateAIHealthInsight('on_track', savingsRate, emergencyFundProgress, aiContext);
         } else {
-            // For underperforming financial standing
             const improvementEmojis = ['😬', '🤔', '📊', '⚠️', '🔍'];
             emoji = improvementEmojis[Math.floor(Math.random() * improvementEmojis.length)];
             label = 'Room for improvement';
+            aiHealthInsight = generateAIHealthInsight('needs_improvement', savingsRate, emergencyFundProgress, aiContext);
         }
         
-        moodEl.textContent = emoji;
-        moodLabel.textContent = label;
+        if (moodEl) {
+            moodEl.textContent = emoji;
+        }
+        if (moodLabel) {
+            moodLabel.textContent = label;
+        }
 
-        // Display insights
-        moodInsight.innerHTML = insights.insights.map(insight => `
-            <div class="insight-item ${insight.type}">
-                <span>${insight.message}</span>
+        // Enhanced insights with AI-powered analysis
+        if (moodInsight) {
+            const combinedInsights = [
+                ...insights.insights.map(insight => ({
+                    type: insight.type,
+                    message: insight.message,
+                    source: 'system'
+                })),
+                {
+                    type: 'ai-powered',
+                    message: aiHealthInsight,
+                    source: 'ai'
+                }
+            ];
+
+            moodInsight.innerHTML = `
+                <div class="health-score-container">
+                    <div class="health-score">
+                        <span class="score-label">Health Score</span>
+                        <span class="score-value">${insights.health_score}%</span>
+                    </div>
+                    <div class="ai-health-badge">
+                        <span class="ai-icon">🤖</span>
+                        <span>AI Analysis</span>
+                    </div>
+                </div>
+                <div class="insights-list">
+                    ${combinedInsights.map(insight => `
+                        <div class="insight-item ${insight.type} ${insight.source}">
+                            ${insight.source === 'ai' ? '<span class="ai-indicator">🧠</span>' : ''}
+                            <span class="insight-text">${insight.message}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="ai-recommendations">
+                    <h5>🎯 Smart Recommendations</h5>
+                    ${generateSmartRecommendations(breakdown, savings, insights, aiContext).map(rec => `
+                        <div class="smart-rec">
+                            <span class="rec-icon">${rec.icon}</span>
+                            <span class="rec-text">${rec.text}</span>
+                            <span class="rec-impact">${rec.impact}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    // Generate AI-powered health insights
+    function generateAIHealthInsight(status, savingsRate, emergencyProgress, aiContext) {
+        const insights = {
+            excellent: [
+                "Your financial discipline is paying off! You're building wealth at an impressive rate.",
+                "You've mastered the balance between spending and saving - keep this momentum going!",
+                "Your emergency fund is well-funded and your savings strategy is optimized.",
+                "You're on track to achieve financial independence faster than average!"
+            ],
+            on_track: [
+                "You're making solid progress! Small adjustments could accelerate your financial growth.",
+                "Your budget shows good financial awareness with room for strategic improvements.",
+                "You're building a strong foundation - consider increasing your savings rate gradually.",
+                "Your financial habits are developing well, focus on consistency for better results."
+            ],
+            needs_improvement: [
+                "There's significant opportunity to optimize your budget for better financial health.",
+                "Small changes in your spending patterns could lead to substantial savings growth.",
+                "Consider reviewing your essential expenses - some categories might have reduction potential.",
+                "Building an emergency fund should be your immediate priority for financial stability."
+            ]
+        };
+
+        const baseInsight = insights[status][Math.floor(Math.random() * insights[status].length)];
+        
+        // Add contextual information based on metrics
+        let contextualAdd = '';
+        if (savingsRate < 10) {
+            contextualAdd = " Try to aim for at least 10% savings rate.";
+        } else if (savingsRate > 20) {
+            contextualAdd = ` Your ${savingsRate.toFixed(1)}% savings rate is excellent!`;
+        }
+        
+        if (emergencyProgress < 25) {
+            contextualAdd += " Focus on building your emergency fund first.";
+        }
+
+        return baseInsight + contextualAdd;
+    }
+
+    // Generate smart recommendations based on AI analysis
+    function generateSmartRecommendations(breakdown, savings, insights, aiContext) {
+        const recommendations = [];
+        const savingsRate = (breakdown.total_savings / (breakdown.total_essential + breakdown.total_savings)) * 100;
+        const emergencyProgress = savings.emergency_fund_progress || 0;
+
+        // Emergency fund recommendations
+        if (emergencyProgress < 50) {
+            recommendations.push({
+                icon: '🛡️',
+                text: 'Prioritize emergency fund',
+                impact: `${50 - emergencyProgress}% to safety net`
+            });
+        }
+
+        // Savings rate recommendations
+        if (savingsRate < 15) {
+            recommendations.push({
+                icon: '📈',
+                text: 'Increase savings rate',
+                impact: '+5% could save ₱' + Math.round((breakdown.total_essential + breakdown.total_savings) * 0.05).toLocaleString()
+            });
+        }
+
+        // Category-specific recommendations
+        const highestCategory = Object.entries(breakdown.categories)
+            .filter(([key]) => ['housing', 'food', 'transportation', 'utilities', 'entertainment'].includes(key))
+            .sort(([,a], [,b]) => b - a)[0];
+
+        if (highestCategory && highestCategory[1] > breakdown.total_savings) {
+            recommendations.push({
+                icon: '🔍',
+                text: `Review ${highestCategory[0]} expenses`,
+                impact: '10% reduction = ₱' + Math.round(highestCategory[1] * 0.1).toLocaleString() + ' saved'
+            });
+        }
+
+        // AI-derived recommendations from context
+        if (aiContext.toLowerCase().includes('subscription') || aiContext.toLowerCase().includes('recurring')) {
+            recommendations.push({
+                icon: '📱',
+                text: 'Audit subscriptions',
+                impact: 'Cancel unused services'
+            });
+        }
+
+        if (aiContext.toLowerCase().includes('meal') || aiContext.toLowerCase().includes('food')) {
+            recommendations.push({
+                icon: '🍽️',
+                text: 'Optimize meal planning',
+                impact: 'Save 15-25% on food'
+            });
+        }
+
+        // Default recommendations if none generated
+        if (recommendations.length === 0) {
+            recommendations.push({
+                icon: '💡',
+                text: 'Track spending patterns',
+                impact: 'Identify saving opportunities'
+            });
+        }
+
+        return recommendations.slice(0, 3); // Limit to top 3 recommendations
+    }
+
+    function getBillsByCategory() {
+        let bills = [];
+        try {
+            bills = JSON.parse(localStorage.getItem('bills') || '[]');
+        } catch (e) {
+            console.error('Error loading bills:', e);
+        }
+        
+        const billsByCategory = {};
+        let totalBills = 0;
+        
+        bills.forEach(bill => {
+            if (!billsByCategory[bill.category]) {
+                billsByCategory[bill.category] = 0;
+            }
+            billsByCategory[bill.category] += bill.amount;
+            totalBills += bill.amount;
+        });
+        
+        return { billsByCategory, totalBills };
+    }
+
+    function updateAIInsights(aiTips) {
+        const aiPanel = document.getElementById('aiInsightsPanel');
+        const aiContent = document.getElementById('aiInsightsContent');
+        
+        if (aiTips && aiTips.tip) {
+            // Remove loading class if present
+            aiPanel.classList.remove('loading');
+            
+            // Format the AI tips content
+            const formattedContent = aiTips.tip.split('\n').map(line => {
+                if (line.trim() === '') return '';
+                if (line.includes('🤖') || line.includes('�') || line.includes('🎯') || line.includes('💡') || line.includes('�')) {
+                    return `<h4>${line.trim()}</h4>`;
+                }
+                if (line.startsWith('•') || line.match(/^\d+\./)) {
+                    return `<li>${line.trim()}</li>`;
+                }
+                return `<p>${line.trim()}</p>`;
+            }).join('');
+            
+            aiContent.innerHTML = formattedContent;
+        } else {
+            // Show placeholder message if no tips
+            aiContent.innerHTML = `
+                <div class="ai-insights-placeholder">
+                    💡 Please enter a budget amount and calculate to generate personalized AI insights and money-saving tips!
+                </div>
+            `;
+        }
+    }
+
+    function showAILoading() {
+        const aiPanel = document.getElementById('aiInsightsPanel');
+        const aiContent = document.getElementById('aiInsightsContent');
+        
+        // Add loading class and show spinner
+        aiPanel.classList.add('loading');
+        aiContent.innerHTML = `
+            <div class="ai-insights-loading">
+                <div class="ai-insights-spinner"></div>
+                <span>🤖 Analyzing your budget and generating personalized insights...</span>
             </div>
-        `).join('');
+        `;
     }
 
     function formatBreakdown(breakdown) {
-        const essentials = ['food', 'transportation', 'utilities'].map(category => `
-            <li>
-                <span class="category">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                <span class="amount">${formatCurrency(breakdown.categories[category])}</span>
-            </li>
-        `).join('');
+        const { billsByCategory, totalBills } = getBillsByCategory();
+        
+        // Enhanced categories that include both calculated and actual bill amounts
+        const allCategories = [
+            'housing',
+            'food', 
+            'transportation', 
+            'utilities',
+            'entertainment',
+            'insurance',
+            'subscriptions',
+            'other'
+        ];
+        
+        const essentials = allCategories.map(category => {
+            let amount = breakdown.categories[category] || 0;
+            let source = 'calculated';
+            let displayName = category.charAt(0).toUpperCase() + category.slice(1);
+            
+            // Use actual bill amount if available, otherwise use calculated amount
+            if (billsByCategory[category]) {
+                amount = billsByCategory[category];
+                source = 'actual';
+            }
+            
+            // Skip if amount is 0 and no bills for this category
+            if (amount === 0 && !billsByCategory[category]) {
+                return '';
+            }
+            
+            return `
+                <li class="${source === 'actual' ? 'actual-bill' : 'calculated'}">
+                    <span class="category">
+                        ${displayName}
+                        ${source === 'actual' ? '<span class="bill-indicator">📋</span>' : ''}
+                    </span>
+                    <span class="amount">${formatCurrency(amount)}</span>
+                </li>
+            `;
+        }).filter(item => item !== '').join('');
+
+        // Calculate total essential expenses including actual bills
+        let totalEssential = breakdown.total_essential || 0;
+        if (totalBills > 0) {
+            // Add actual bills to calculated essential amount, but avoid double counting
+            // For transportation and utilities that exist in both
+            const transportationBills = billsByCategory.transportation || 0;
+            const utilitiesBills = billsByCategory.utilities || 0;
+            const calculatedTransportation = breakdown.categories.transportation || 0;
+            const calculatedUtilities = breakdown.categories.utilities || 0;
+            
+            // Replace calculated amounts with actual bills for these categories
+            totalEssential = totalEssential - calculatedTransportation - calculatedUtilities + totalBills;
+        }
 
         const savings = ['emergency_fund', 'discretionary'].map(category => `
             <li>
@@ -477,12 +831,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `
             <div class="budget-breakdown">
-                <h3>Budget Breakdown</h3>
+                <h3>
+                    Comprehensive Budget Breakdown
+                    ${totalBills > 0 ? `
+                    <div class="breakdown-legend">
+                        <div class="legend-item">
+                            <div class="legend-color legend-actual"></div>
+                            <span>From Bills</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-calculated"></div>
+                            <span>Calculated</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                </h3>
+                ${totalBills > 0 ? `<p class="bills-integration-note">📋 Integrated with your actual bills (₱${formatCurrency(totalBills).replace('₱', '')})</p>` : ''}
                 <ul class="breakdown-list">
                     ${essentials}
                     <li class="total-row">
                         <span class="category">Total Essential Expenses</span>
-                        <span class="amount">${formatCurrency(breakdown.total_essential)}</span>
+                        <span class="amount">${formatCurrency(totalEssential)}</span>
                     </li>
                     <li class="section-header">Savings and Discretionary</li>
                     ${savings}
@@ -491,6 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="amount">${formatCurrency(breakdown.total_savings)}</span>
                     </li>
                 </ul>
+                ${totalBills > 0 ? `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Manage your bills</a> to see even more accurate breakdowns!</p>` : `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Add your bills</a> for a more accurate budget breakdown!</p>`}
             </div>
         `;
     }

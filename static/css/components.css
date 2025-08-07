@@ -4,6 +4,9 @@
     flex-direction: column;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: left;
 }
 
 .input-group {
@@ -16,6 +19,9 @@
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-color);
+    text-align: left;
+    display: block;
+    width: 100%;
 }
 
 input[type="text"],
@@ -26,6 +32,9 @@ select {
     border-radius: 6px;
     font-size: 1rem;
     transition: border-color 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
 }
 
 input[type="text"]:focus,
@@ -43,6 +52,7 @@ select:focus {
     padding: var(--spacing-md);
     border-radius: 6px;
     font-weight: 500;
+    width: 100%;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
@@ -69,6 +79,7 @@ select:focus {
     position: absolute;
     right: var(--spacing);
     top: var(--spacing);
+    z-index: 500;
 }
 
 .export-btn:hover {
@@ -124,11 +135,13 @@ select:focus {
     .app-container {
         flex-direction: column;
         padding: var(--spacing-md);
+        gap: var(--spacing-md); /* Reduced gap for smaller screens */
     }
 
     .budget-panel,
     .insights-panel {
         width: 100%;
+        padding: var(--spacing-md); /* Adjust padding for smaller screens */
     }
 
     .insights-content {
@@ -147,5 +160,40 @@ select:focus {
 
     .panel-header h2 {
         font-size: 1.25rem;
+    }
+}
+
+/* Responsive Submit Button */
+@media (min-width: 768px) {
+    .submit-btn {
+        width: auto;
+        min-width: 160px;
+    }
+}
+
+/* Additional Responsive Styling for Small Screens */
+@media (max-width: 480px) {
+    .panel-header h2 {
+        font-size: 1.4rem;
+    }
+    
+    .panel-header p {
+        font-size: 0.9rem;
+    }
+    
+    .input-group label {
+        font-size: 0.85rem;
+    }
+    
+    input[type="text"], 
+    input[type="number"], 
+    select {
+        padding: 8px 12px;
+        font-size: 0.95rem;
+    }
+    
+    .submit-btn {
+        padding: 10px;
+        font-size: 0.95rem;
     }
 }

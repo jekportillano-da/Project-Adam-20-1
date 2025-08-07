@@ -1,0 +1,71 @@
+/* Budget form input alignment fix - copied from Monthly Bills approach */
+
+/* Global resets for all form elements */
+input[type="text"],
+input[type="number"],
+select {
+    text-align: left !important;
+    direction: ltr !important;
+    text-indent: 0 !important;
+    -webkit-text-align: left !important;
+    -moz-text-align: left !important;
+}
+
+/* Target specific budget inputs with high specificity */
+#budget-form input#budget,
+#budget-form select#duration {
+    text-align: left !important;
+    direction: ltr !important;
+    text-indent: 0 !important;
+    padding-left: 10px !important;
+    text-align-last: left !important;
+    -moz-text-align-last: left !important;
+    -webkit-text-align-last: left !important;
+}
+
+/* Apply to select options */
+#budget-form select#duration option {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+/* Apply when focused */
+#budget-form input#budget:focus,
+#budget-form select#duration:focus {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+/* Reset any RTL-related browser defaults */
+html[dir="rtl"] #budget-form input#budget,
+html[dir="rtl"] #budget-form select#duration {
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+/* Force element width to ensure proper rendering */
+#budget-form .input-group {
+    width: 100%;
+}
+
+#budget-form .input-group input,
+#budget-form .input-group select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Remove any browser-specific styling that might interfere */
+#budget-form input#budget,
+#budget-form select#duration {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Add a down arrow for select box */
+#budget-form select#duration {
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+}
