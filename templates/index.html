@@ -6,6 +6,123 @@
   <title>Budget Buddy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/input-alignment.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/zoom-alignment-fix.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  
+  <script>
+    // Authentication helper functions
+    function getAuthToken() {
+      return localStorage.getItem('access_token');
+    }
+    
+    function isAuthenticated() {
+      return !!getAuthToken();
+    }
+    
+    function logout() {
+      localStorage.removeItem('access_token');
+      updateAuthUI();
+      // Redirect to login page
+      window.location.href = '/login';
+    }
+    
+    function updateAuthUI() {
+      const isAuth = isAuthenticated();
+      const isDemoMode = window.demoMode || false;
+      const loginItem = document.getElementById('auth-login');
+      const registerItem = document.getElementById('auth-register');
+      const logoutItem = document.getElementById('auth-logout');
+      const separator = document.getElementById('auth-separator');
+      
+      // Update menu items based on auth status and demo mode
+      const menuItems = document.querySelectorAll('.menu-item');
+      menuItems.forEach(item => {
+        if (item.textContent.includes('Budget Insights')) {
+          if (isDemoMode) {
+            item.href = '/demo';
+          } else {
+            item.href = isAuth ? '/' : '/demo';
+          }
+        } else if (item.textContent.includes('Monthly Bills')) {
+          if (isDemoMode) {
+            item.href = '/demo/bills';
+            item.classList.remove('disabled');
+            item.textContent = 'Monthly Bills';
+          } else if (isAuth) {
+            item.href = '/bills';
+            item.classList.remove('disabled');
+            item.textContent = 'Monthly Bills';
+          } else {
+            item.href = '/demo/bills';
+            item.classList.remove('disabled');
+            item.textContent = 'Monthly Bills (Demo)';
+          }
+        }
+      });
+      
+      if (isAuth) {
+        loginItem.style.display = 'none';
+        registerItem.style.display = 'none';
+        logoutItem.style.display = 'block';
+        
+        // Show user info if available
+        if (window.currentUser) {
+          const existingUserInfo = document.querySelector('.user-info-item');
+          if (!existingUserInfo) {
+            const userInfo = document.createElement('li');
+            userInfo.className = 'user-info-item';
+            userInfo.innerHTML = `<span class="menu-item" style="font-weight: 500; color: var(--primary-color);">Welcome, ${window.currentUser.name}</span>`;
+            separator.parentNode.insertBefore(userInfo, separator);
+          }
+        }
+      } else {
+        loginItem.style.display = 'block';
+        registerItem.style.display = 'block';
+        logoutItem.style.display = 'none';
+        
+        // Remove user info if it exists
+        const existingUserInfo = document.querySelector('.user-info-item');
+        if (existingUserInfo) {
+          existingUserInfo.remove();
+        }
+        
+        // Add demo mode indicator if in demo
+        if (isDemoMode) {
+          const existingDemoInfo = document.querySelector('.demo-info-item');
+          if (!existingDemoInfo) {
+            const demoInfo = document.createElement('li');
+            demoInfo.className = 'demo-info-item';
+            demoInfo.innerHTML = `<span class="menu-item" style="font-weight: 500; color: var(--warning-color);">🎭 Demo Mode</span>`;
+            separator.parentNode.insertBefore(demoInfo, separator);
+          }
+        }
+      }
+    }
+    
+    // Override the original API call to include authentication
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options = {}) {
+      const token = getAuthToken();
+      if (token && url.startsWith('/api')) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`
+        };
+      }
+      return originalFetch(url, options);
+    };
+    
+    // Initialize auth UI when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+    });
+  </script>
+  
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
@@ -43,10 +160,14 @@
       </div>
       <div class="dropdown-menu" id="profileDropdown">
         <ul class="menu-items">
-          <li><a href="/" class="menu-item active">Budget Insights</a></li>
-          <li><a href="/bills" class="menu-item">Monthly Bills</a></li>
+          <li><a href="#" class="menu-item active" id="budget-insights-link">Budget Insights</a></li>
+          <li><a href="#" class="menu-item" id="monthly-bills-link">Monthly Bills</a></li>
           <li><a href="#" class="menu-item disabled">Goals (Coming Soon)</a></li>
           <li><a href="#" class="menu-item disabled">Reports (Coming Soon)</a></li>
+          <li id="auth-separator" style="border-top: 1px solid var(--border-color); margin: 0.5rem 0;"></li>
+          <li id="auth-login"><a href="/login" class="menu-item">Login</a></li>
+          <li id="auth-register"><a href="/register" class="menu-item">Register</a></li>
+          <li id="auth-logout" style="display: none;"><a href="#" class="menu-item" onclick="logout()">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -60,44 +181,76 @@
         <p>Enter your budget details below</p>
       </div>
 
-      <!-- Vertical layout like a login form -->
-      <form id="budget-form" style="display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 350px; margin: 0 auto; padding: 0; background: transparent; border: none; box-shadow: none;">
-        <div style="display: flex; flex-direction: column;">
-          <label for="budget" style="font-weight: 500; margin-bottom: 8px; text-align: left; color: var(--text-color);">Budget Amount (PHP)</label>
-          <input 
-            type="text" 
-            id="budget" 
-            placeholder="Enter amount (e.g., 1,000)" 
-            pattern="^[0-9,]*\.?[0-9]*$"
-            required
-            autocomplete="off"
-            inputmode="numeric"
-            style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; text-align: left;"
-          >
-        </div>
-        <div style="display: flex; flex-direction: column;">
-          <label for="duration" style="font-weight: 500; margin-bottom: 8px; text-align: left; color: var(--text-color);">Time Period</label>
-          <select 
-            id="duration" 
-            required
-            style="padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; text-align: left;"
-          >
-            <option value="daily" selected>Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        </div>
-        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-          <button 
-            type="submit"
-            class="submit-btn"
-            style="width: auto; min-width: 140px; margin: 0;"
-          >
-            Calculate Budget
-          </button>
-        </div>
-      </form>
-      <div id="suggestion" class="budget-results"></div>
+      <!-- Improved vertical layout like a standard login form -->
+      <div class="form-container" style="width: 100%; max-width: 400px; margin: 0 auto;">
+        <form id="budget-form" style="display: flex; flex-direction: column; gap: 20px; width: 100%; padding: 24px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Budget Amount Field -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+            <label for="budget" style="font-weight: 600; color: var(--text-color); font-size: 14px; text-align: left;">
+              Budget Amount (PHP)
+            </label>
+            <input 
+              type="text" 
+              id="budget" 
+              placeholder="Enter amount (e.g., 10,000)" 
+              pattern="^[0-9,]*\.?[0-9]*$"
+              required
+              autocomplete="off"
+              inputmode="numeric"
+              style="padding: 14px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; text-align: left; transition: border-color 0.2s ease; background: white;"
+              onfocus="this.style.borderColor='#4CAF50'"
+              onblur="this.style.borderColor='#e1e5e9'"
+            >
+          </div>
+          
+          <!-- Time Period Field -->
+          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+            <label for="duration" style="font-weight: 600; color: var(--text-color); font-size: 14px; text-align: left;">
+              Time Period
+            </label>
+            <select 
+              id="duration" 
+              required
+              style="padding: 14px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; background: white; cursor: pointer; transition: border-color 0.2s ease;"
+              onfocus="this.style.borderColor='#4CAF50'"
+              onblur="this.style.borderColor='#e1e5e9'"
+            >
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          
+          <!-- Submit Button - Right Aligned -->
+          <div class="form-actions" style="display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 8px;">
+            <button 
+              type="submit"
+              class="submit-btn"
+              style="
+                padding: 14px 28px;
+                background: linear-gradient(135deg, #4CAF50, #45a049);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                min-width: 160px;
+              "
+              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'"
+              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(76, 175, 80, 0.3)'"
+            >
+              CALCULATE BUDGET
+            </button>
+          </div>
+        </form>
+        
+        <!-- Results Section -->
+        <div id="suggestion" class="budget-results" style="margin-top: 24px;"></div>
+      </div>
     </div>
 
     <!-- Right Panel: Financial Insights -->
@@ -187,5 +340,23 @@
   <script src="{{ url_for('static', filename='js/zoom-alignment-fix.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bills.js') }}"></script>
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set up navigation links based on demo mode
+      const budgetInsightsLink = document.getElementById('budget-insights-link');
+      const monthlyBillsLink = document.getElementById('monthly-bills-link');
+      
+      if (window.demoMode) {
+        budgetInsightsLink.href = '/demo';
+        monthlyBillsLink.href = '/demo/bills';
+        monthlyBillsLink.classList.remove('disabled');
+      } else {
+        budgetInsightsLink.href = '/';
+        monthlyBillsLink.href = '/bills';
+        monthlyBillsLink.classList.remove('disabled');
+      }
+    });
+  </script>
 </body>
 </html>

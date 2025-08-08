@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart Budget Assistant</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .auth-container {
+            min-height: calc(100vh - var(--header-height));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing);
+        }
+        
+        .auth-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 16px rgba(27, 73, 101, 0.08);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-header h2 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .auth-form .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .auth-form label {
+            font-weight: 500;
+            color: var(--text-color);
+            text-align: left;
+        }
+        
+        .auth-form input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(95, 168, 211, 0.2);
+        }
+        
+        .auth-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(27, 73, 101, 0.2);
+        }
+        
+        .auth-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .auth-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .auth-links {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .auth-links a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(244, 67, 54, 0.2);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .success-message {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .password-requirements {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <div class="header-content">
+            <h1>Smart Budget Assistant</h1>
+            <p class="subtitle">Your AI-powered financial companion</p>
+        </div>
+    </div>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>Create Account</h2>
+                <p>Join thousands who are mastering their finances</p>
+            </div>
+
+            <div id="message-container"></div>
+
+            <form class="auth-form" id="register-form">
+                <div class="input-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <div class="password-requirements">
+                        Password must be at least 6 characters long
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required>
+                </div>
+
+                <button type="submit" class="auth-btn" id="register-btn">Create Account</button>
+            </form>
+
+            <div class="auth-links">
+                <p>Already have an account? <a href="/login">Sign in here</a></p>
+                <p><a href="/demo">Try Demo Mode (No Account Required)</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const registerForm = document.getElementById('register-form');
+        const messageContainer = document.getElementById('message-container');
+        const registerBtn = document.getElementById('register-btn');
+
+        function showMessage(message, type = 'error') {
+            messageContainer.innerHTML = `<div class="${type}-message">${message}</div>`;
+        }
+
+        function clearMessage() {
+            messageContainer.innerHTML = '';
+        }
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessage();
+
+            const formData = new FormData(registerForm);
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirm-password');
+
+            // Client-side validation
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match.');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters long.');
+                return;
+            }
+
+            const registerData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: password
+            };
+
+            try {
+                registerBtn.disabled = true;
+                registerBtn.textContent = 'Creating Account...';
+
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registerData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('Account created successfully! Please log in.', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else {
+                    showMessage(result.detail || 'Registration failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showMessage('Network error. Please check your connection and try again.');
+            } finally {
+                registerBtn.disabled = false;
+                registerBtn.textContent = 'Create Account';
+            }
+        });
+
+        // Check if user is already logged in
+        if (localStorage.getItem('access_token')) {
+            showMessage('You are already logged in. Redirecting...', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

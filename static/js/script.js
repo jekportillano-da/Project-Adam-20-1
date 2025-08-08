@@ -115,9 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchFromAPI(url, data) {
         try {
-            console.log('Fetching from:', url);
-            console.log('With data:', data);
-            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 
@@ -127,9 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(data)
             });
 
-            console.log('Response status:', response.status);
             const responseData = await response.json();
-            console.log('Response data:', responseData);
             
             if (!response.ok) {
                 throw new Error(responseData.detail || `API request failed: ${response.status}`);
@@ -767,6 +762,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatBreakdown(breakdown) {
         const { billsByCategory, totalBills } = getBillsByCategory();
         
+        // Check if we're in demo mode to determine the correct bills URL
+        const isDemoMode = window.demoMode || false;
+        const billsUrl = isDemoMode ? '/demo/bills' : '/bills';
+        
         // Enhanced categories that include both calculated and actual bill amounts
         const allCategories = [
             'housing',
@@ -860,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="amount">${formatCurrency(breakdown.total_savings)}</span>
                     </li>
                 </ul>
-                ${totalBills > 0 ? `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Manage your bills</a> to see even more accurate breakdowns!</p>` : `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Add your bills</a> for a more accurate budget breakdown!</p>`}
+                ${totalBills > 0 ? `<p class="bills-tip">💡 <a href="${billsUrl}" style="color: var(--primary-color); text-decoration: none;">Manage your bills</a> to see even more accurate breakdowns!</p>` : `<p class="bills-tip">💡 <a href="${billsUrl}" style="color: var(--primary-color); text-decoration: none;">Add your bills</a> for a more accurate budget breakdown!</p>`}
             </div>
         `;
     }

@@ -470,8 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize and update the chart
     function updateChart() {
-        console.log('updateChart called');
-        
         const chartElement = document.getElementById('billsChart');
         const showPercentages = document.getElementById('showPercentages').checked;
         

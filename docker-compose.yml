@@ -1,17 +1,44 @@
 version: '3.8'
 
 services:
-  gateway:
+  # Development Gateway - Demo mode on port 8000
+  gateway-dev:
     build:
       context: .
       dockerfile: Dockerfile.gateway
     ports:
-      - "8080:8000"
+      - "8000:8000"
     volumes:
       - ./static:/app/static
       - ./templates:/app/templates
+      - ./auth:/app/auth
+      - ./common:/app/common
     environment:
+      - APP_ENV=dev
       - ENVIRONMENT=development
+    command: ["python", "dev_server.py"]
+    depends_on:
+      - budget-service
+      - savings-service
+      - insights-service
+
+  # Production Gateway - Auth required on port 8080
+  gateway-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./auth:/app/auth
+      - ./common:/app/common
+    environment:
+      - APP_ENV=prod
+      - ENVIRONMENT=production
+      - SECRET_KEY=${SECRET_KEY:-development-secret-change-in-production}
+    command: ["python", "prod_server.py"]
     depends_on:
       - budget-service
       - savings-service
@@ -65,7 +92,7 @@ services:
   api-gateway:
     build: ./services/api-gateway
     ports:
-      - "8000:8000"
+      - "8004:8000"
     environment:
       - BUDGET_SERVICE_URL=http://budget-service:8000
       - SAVINGS_SERVICE_URL=http://savings-service:8000

@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "C:/Users/bagal/Documents/OneDrive - PokitPal/Desktop/Git Repo/Project-Adam-20-1-1/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "C:/Users/bagal/Documents/OneDrive - PokitPal/Desktop/Git Repo/Project-Adam-20-1-1/.venv/Lib/site-packages"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic"
+}

@@ -48,8 +48,8 @@
       </div>
       <div class="dropdown-menu" id="profileDropdown">
         <ul class="menu-items">
-          <li><a href="/" class="menu-item">Budget Insights</a></li>
-          <li><a href="/bills" class="menu-item active">Monthly Bills</a></li>
+          <li><a href="#" class="menu-item" id="budget-insights-link">Budget Insights</a></li>
+          <li><a href="#" class="menu-item active" id="monthly-bills-link">Monthly Bills</a></li>
           <li><a href="#" class="menu-item disabled">Goals (Coming Soon)</a></li>
           <li><a href="#" class="menu-item disabled">Reports (Coming Soon)</a></li>
         </ul>
@@ -187,5 +187,21 @@
   <!-- Scripts -->
   <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bills.js') }}"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set up navigation links based on demo mode
+      const budgetInsightsLink = document.getElementById('budget-insights-link');
+      const monthlyBillsLink = document.getElementById('monthly-bills-link');
+      
+      if (window.demoMode) {
+        budgetInsightsLink.href = '/demo';
+        monthlyBillsLink.href = '/demo/bills';
+      } else {
+        budgetInsightsLink.href = '/';
+        monthlyBillsLink.href = '/bills';
+      }
+    });
+  </script>
 </body>
 </html>

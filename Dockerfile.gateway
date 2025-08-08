@@ -10,12 +10,18 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY gateway.py .
+COPY dev_server.py .
+COPY prod_server.py .
+COPY settings.py .
+COPY config.py .
+COPY auth/ auth/
+COPY common/ common/
 COPY static/ static/
 COPY templates/ templates/
 
-# Expose the port
+# Expose both ports (actual port depends on environment)
 EXPOSE 8000
+EXPOSE 8080
 
-# Start the FastAPI application with uvicorn
-CMD ["uvicorn", "gateway:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Default command (overridden by docker-compose)
+CMD ["python", "dev_server.py"]
