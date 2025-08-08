@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Development Gateway - Demo mode on port 8000
+  # Demo Gateway - No auth required on port 8000
   gateway-dev:
     build:
       context: .
@@ -13,10 +13,10 @@ services:
       - ./templates:/app/templates
       - ./auth:/app/auth
       - ./common:/app/common
+      - ./.env.dev:/app/.env.dev
     environment:
-      - APP_ENV=dev
-      - ENVIRONMENT=development
-    command: ["python", "dev_server.py"]
+      - ENV=dev
+    command: ["uvicorn", "main_dev:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     depends_on:
       - budget-service
       - savings-service
@@ -34,11 +34,11 @@ services:
       - ./templates:/app/templates
       - ./auth:/app/auth
       - ./common:/app/common
+      - ./.env.prod:/app/.env.prod
     environment:
-      - APP_ENV=prod
-      - ENVIRONMENT=production
-      - SECRET_KEY=${SECRET_KEY:-development-secret-change-in-production}
-    command: ["python", "prod_server.py"]
+      - ENV=prod
+      - SECRET_KEY=${SECRET_KEY:-production-secret-key-please-change-this}
+    command: ["uvicorn", "main_prod:app", "--host", "0.0.0.0", "--port", "8080"]
     depends_on:
       - budget-service
       - savings-service

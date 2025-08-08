@@ -1,19 +1,19 @@
 import logging
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from settings import AppSettings
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-def create_app(settings: AppSettings) -> FastAPI:
+def create_app(settings) -> FastAPI:
     """
-    Create and configure FastAPI application
+    Create and configure FastAPI application based on settings
     
     Args:
-        settings: Application settings for the environment
+        settings: AppSettings instance with environment configuration
     """
     # Create FastAPI app
     app = FastAPI(
@@ -81,7 +81,7 @@ def create_app(settings: AppSettings) -> FastAPI:
                 logger.error(f"Error serving registration page: {str(e)}")
                 raise HTTPException(status_code=500, detail="Internal server error")
     
-    # Include main routes with appropriate configuration
+    # Include main application routes
     from common.routes import create_main_routes, create_debug_routes
     
     main_router = create_main_routes(
