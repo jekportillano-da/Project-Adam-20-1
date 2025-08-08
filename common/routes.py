@@ -51,13 +51,35 @@ def create_main_routes(require_auth: bool = True, route_prefix: str = "") -> API
             # Process the template manually to replace url_for tags
             html_content = process_template_variables(html_content)
             
+            # Set up navigation URLs based on environment
+            if require_auth:
+                # Production environment - set up production URLs
+                budget_insights_url = "/"
+                monthly_bills_url = "/bills"
+                demo_mode_value = "false"
+            else:
+                # Demo environment - set up demo URLs
+                budget_insights_url = "/demo"
+                monthly_bills_url = "/demo/bills"
+                demo_mode_value = "true"
+            
+            # Replace navigation URLs in the HTML
+            html_content = html_content.replace(
+                'id="budget-insights-link">Budget Insights</a>',
+                f'id="budget-insights-link" href="{budget_insights_url}">Budget Insights</a>'
+            )
+            html_content = html_content.replace(
+                'id="monthly-bills-link">Monthly Bills</a>',
+                f'id="monthly-bills-link" href="{monthly_bills_url}">Monthly Bills</a>'
+            )
+            
             # Inject authentication state
             if require_auth and current_user:
                 # Authenticated user in production
                 user_script = f"""
                 <script>
                     window.isAuthenticated = true;
-                    window.demoMode = false;
+                    window.demoMode = {demo_mode_value};
                     window.currentUser = {{
                         id: {current_user.id},
                         name: "{current_user.name}",
@@ -75,19 +97,19 @@ def create_main_routes(require_auth: bool = True, route_prefix: str = "") -> API
                 """
             else:
                 # Demo mode (dev environment)
-                user_script = """
+                user_script = f"""
                 <script>
                     window.isAuthenticated = false;
-                    window.demoMode = true;
+                    window.demoMode = {demo_mode_value};
                     window.currentUser = null;
                     
-                    function getAuthToken() {
+                    function getAuthToken() {{
                         return null;
-                    }
+                    }}
                     
-                    function isAuthenticated() {
+                    function isAuthenticated() {{
                         return false;
-                    }
+                    }}
                     
                     console.log('🎭 Running in Demo Mode - No account required!');
                 </script>
@@ -119,6 +141,45 @@ def create_main_routes(require_auth: bool = True, route_prefix: str = "") -> API
             
             # Process template variables
             html_content = process_template_variables(html_content)
+            
+            # Set up navigation URLs based on environment
+            if require_auth:
+                # Production environment
+                budget_insights_url = "/"
+                monthly_bills_url = "/bills"
+                demo_mode_value = "false"
+            else:
+                # Demo environment
+                budget_insights_url = "/demo"
+                monthly_bills_url = "/demo/bills"
+                demo_mode_value = "true"
+            
+            # Replace navigation URLs in the HTML
+            html_content = html_content.replace(
+                'budgetInsightsLink.href = \'/demo\';',
+                f'budgetInsightsLink.href = \'{budget_insights_url}\';'
+            )
+            html_content = html_content.replace(
+                'monthlyBillsLink.href = \'/demo/bills\';',
+                f'monthlyBillsLink.href = \'{monthly_bills_url}\';'
+            )
+            html_content = html_content.replace(
+                'budgetInsightsLink.href = \'/\';',
+                f'budgetInsightsLink.href = \'{budget_insights_url}\';'
+            )
+            html_content = html_content.replace(
+                'monthlyBillsLink.href = \'/bills\';',
+                f'monthlyBillsLink.href = \'{monthly_bills_url}\';'
+            )
+            
+            # Inject demo mode variable
+            demo_script = f"""
+            <script>
+                window.demoMode = {demo_mode_value};
+                console.log('🎭 Bills page - Demo mode: {demo_mode_value}');
+            </script>
+            """
+            html_content = html_content.replace('</head>', demo_script + '</head>')
             
             return HTMLResponse(content=html_content)
             
