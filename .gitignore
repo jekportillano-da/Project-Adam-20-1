@@ -18,6 +18,44 @@ lib/
 lib64/
 parts/
 sdist/
+
+# Backup folder (created during cleanup)
+/backup/
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Environment variables and secrets
+.env
+.env.*
+.venv
+secrets/
+*.pem
+*.key
+*.crt
+
+# VS Code workspace files
+.vscode/
+*.code-workspace
+.history/
+
+# Testing and debugging files
+debug_*.json
+login_data.json
+register_data.json
+test_api.json
+cookies.txt
+
+# Application logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
 var/
 wheels/
 share/python-wheels/
