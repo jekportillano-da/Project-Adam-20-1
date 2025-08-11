@@ -12,6 +12,11 @@ class AppSettings:
         # Load environment-specific .env file
         if env_file:
             load_dotenv(env_file)
+            # Extract environment from filename if not set
+            if ".env.prod" in env_file:
+                os.environ.setdefault("ENV", "prod")
+            elif ".env.dev" in env_file:
+                os.environ.setdefault("ENV", "dev")
         else:
             # Auto-detect based on ENV variable
             env = os.getenv("ENV", "dev")
@@ -19,51 +24,64 @@ class AppSettings:
                 load_dotenv(".env.prod")
             else:
                 load_dotenv(".env.dev")
-        
+
         # Core settings
         self.env = os.getenv("ENV", "dev")
-        self.port = int(os.getenv("PORT", "8000"))
-        self.route_prefix = os.getenv("ROUTE_PREFIX", "/demo")
+        # Defaults differ by env: dev=8000 with /demo, prod=8080 with root
+        default_port = "8080" if self.env == "prod" else "8000"
+        default_prefix = "" if self.env == "prod" else "/demo"
+        self.port = int(os.getenv("PORT", default_port))
+        # FastAPI prefix must not end with "/" - ensure empty string for root
+        raw_prefix = os.getenv("ROUTE_PREFIX", default_prefix)
+        self.route_prefix = "" if raw_prefix == "/" else raw_prefix
         self.debug = os.getenv("DEBUG", "true").lower() == "true"
-        
+
         # Authentication settings
         self.require_auth = self.env == "prod"  # Only prod requires auth
         self.secret_key = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
         self.algorithm = "HS256"
         self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-        
-        # API Keys
+
+        # API Keys / AI settings
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.groq_api_key = os.getenv("GROQ_API_KEY")
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        
+        self.ai_insights_enabled = os.getenv("AI_INSIGHTS_ENABLED", "true").lower() == "true"
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
         # Database
         self.database_url = os.getenv("DATABASE_URL", f"sqlite:///./budget_assistant_{self.env}.db")
-        
+
         # Services
         self.budget_service_url = os.getenv("BUDGET_SERVICE_URL", "http://localhost:8001")
         self.savings_service_url = os.getenv("SAVINGS_SERVICE_URL", "http://localhost:8002")
         self.insights_service_url = os.getenv("INSIGHTS_SERVICE_URL", "http://localhost:8003")
-        
+
         # Server settings
         self.host = "0.0.0.0"
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
-        
+
         # CORS settings
-        allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8000,http://localhost:8080")
-        self.allowed_origins = [origin.strip() for origin in allowed_origins_str.split(',')]
-        
+        allowed_origins_str = os.getenv(
+            "ALLOWED_ORIGINS",
+            "http://localhost:3000,http://localhost:8000,http://localhost:8080",
+        )
+        self.allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
         # Cookie settings
-        self.cookie_secure = os.getenv("COOKIE_SECURE", "false").lower() == "true" if self.env == "prod" else False
+        self.cookie_secure = (
+            os.getenv("COOKIE_SECURE", "false").lower() == "true" if self.env == "prod" else False
+        )
         self.cookie_samesite = os.getenv("COOKIE_SAMESITE", "strict") if self.env == "prod" else "lax"
         self.cookie_domain = None
         self.cookie_path = "/"
-        
+
         # App title
         if self.env == "prod":
             self.app_title = "Smart Budget Assistant"
         else:
             self.app_title = "Smart Budget Assistant - Demo"
-        
+
         # Validate production settings
         if self.env == "prod":
             self._validate_production()
@@ -72,7 +90,7 @@ class AppSettings:
         """Validate critical settings for production"""
         if self.secret_key == "production-secret-key-please-change-this":
             raise ValueError("Please change the default SECRET_KEY in .env.prod")
-        
+        # Non-fatal warnings for optional integrations
         if not self.groq_api_key:
             print("Warning: GROQ_API_KEY not set in production")
     

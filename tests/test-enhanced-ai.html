@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AI Insights Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .demo-section {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+        }
+        .budget-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .highlight {
+            background: rgba(76, 175, 80, 0.3);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+        .improvement {
+            background: rgba(33, 150, 243, 0.3);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 3px solid #2196F3;
+        }
+        .test-button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: transform 0.2s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Enhanced AI Insights Demo</h1>
+        <p>Testing the completely overhauled AI financial analysis system</p>
+
+        <div class="demo-section">
+            <h2>📊 Sample Budget Data</h2>
+            <div class="budget-item">
+                <span>💰 Monthly Income:</span>
+                <span class="highlight">$5,000</span>
+            </div>
+            <div class="budget-item">
+                <span>🏠 Rent:</span>
+                <span>$1,500 (30%)</span>
+            </div>
+            <div class="budget-item">
+                <span>🛒 Groceries:</span>
+                <span>$600 (12%)</span>
+            </div>
+            <div class="budget-item">
+                <span>⚡ Utilities:</span>
+                <span>$200 (4%)</span>
+            </div>
+            <div class="budget-item">
+                <span>🚗 Transportation:</span>
+                <span>$300 (6%)</span>
+            </div>
+            <div class="budget-item">
+                <span>🎬 Entertainment:</span>
+                <span>$400 (8%)</span>
+            </div>
+            <div class="budget-item">
+                <span>📦 Other:</span>
+                <span>$200 (4%)</span>
+            </div>
+            <div class="budget-item" style="border-top: 2px solid #4CAF50; font-weight: bold;">
+                <span>💰 Remaining:</span>
+                <span class="highlight">$1,800 (36% savings rate!)</span>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🤖 What the Enhanced AI System Now Provides</h2>
+            
+            <div class="improvement">
+                <strong>✅ Intelligent Financial Ratio Analysis</strong>
+                <p>Calculates savings rate, housing ratio, spending patterns</p>
+            </div>
+            
+            <div class="improvement">
+                <strong>✅ Personalized Spending Insights</strong>
+                <p>Identifies areas for optimization based on your specific situation</p>
+            </div>
+            
+            <div class="improvement">
+                <strong>✅ Category-Specific Recommendations</strong>
+                <p>Targeted advice for each spending category</p>
+            </div>
+            
+            <div class="improvement">
+                <strong>✅ Priority Action Items</strong>
+                <p>Clear, actionable next steps ranked by importance</p>
+            </div>
+            
+            <div class="improvement">
+                <strong>✅ Emergency Fund Guidance</strong>
+                <p>Contextual advice on building financial security</p>
+            </div>
+            
+            <div class="improvement">
+                <strong>✅ Structured, Professional Formatting</strong>
+                <p>Clean sections with headers, lists, and highlights</p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎯 Key Improvements Over Previous System</h2>
+            <ul>
+                <li><strong>No longer just repeats breakdown data</strong> - Provides meaningful analysis</li>
+                <li><strong>Intelligent financial calculations</strong> - Ratios, percentages, comparisons</li>
+                <li><strong>Actionable recommendations</strong> - Specific steps you can take</li>
+                <li><strong>Enhanced OpenAI integration</strong> - With smart fallback system</li>
+                <li><strong>Professional formatting</strong> - Sections, headers, and styling</li>
+                <li><strong>Contextual insights</strong> - Advice tailored to your situation</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="http://localhost:8000/demo" class="test-button">
+                🌐 Test Enhanced AI Insights Live
+            </a>
+            <p style="margin-top: 15px; opacity: 0.8;">
+                Enter the sample data above to see the enhanced AI insights in action!
+            </p>
+        </div>
+
+        <div class="demo-section">
+            <h3>🛠️ Technical Implementation</h3>
+            <p><strong>Backend:</strong> Completely rewrote <code>ai/routes.py</code> with intelligent financial analysis</p>
+            <p><strong>Frontend:</strong> Enhanced <code>static/js/script.js</code> with section parsing and formatting</p>
+            <p><strong>Styling:</strong> Added comprehensive CSS in <code>static/css/insights.css</code></p>
+            <p><strong>Integration:</strong> OpenAI API with sophisticated rule-based fallback</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -48,6 +48,10 @@ Generate a personalized budget breakdown and advice.
 - Enforced per client IP address
 - Headers include remaining rate limit information
 
+## AI Behavior
+- If `AI_INSIGHTS_ENABLED=true` and an API key is present (`OPENAI_API_KEY` or `GROQ_API_KEY` or `DEEPSEEK_API_KEY`), tips are generated using an LLM with the budget and savings context.
+- If no key is configured or the AI call fails, the endpoint falls back to a safe rule-based tip with the same response format.
+
 ## Response Format
 The tip response is formatted as a Markdown string with the following structure:
 ```

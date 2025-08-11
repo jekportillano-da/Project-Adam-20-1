@@ -120,10 +120,124 @@ def create_main_routes(require_auth: bool = True, route_prefix: str = "") -> API
             # Process template variables
             html_content = process_template_variables(html_content)
             
+            # Inject authentication state (same as home page)
+            if require_auth and current_user:
+                # Authenticated user in production
+                user_script = f"""
+                <script>
+                    window.isAuthenticated = true;
+                    window.demoMode = false;
+                    window.currentUser = {{
+                        id: {current_user.id},
+                        name: "{current_user.name}",
+                        email: "{current_user.email}"
+                    }};
+                    
+                    function getAuthToken() {{
+                        return 'cookie-auth';
+                    }}
+                    
+                    function isAuthenticated() {{
+                        return true;
+                    }}
+                </script>
+                """
+            else:
+                # Demo mode (dev environment)
+                user_script = """
+                <script>
+                    window.isAuthenticated = false;
+                    window.demoMode = true;
+                    window.currentUser = null;
+                    
+                    function getAuthToken() {
+                        return null;
+                    }
+                    
+                    function isAuthenticated() {
+                        return false;
+                    }
+                    
+                    console.log('🎭 Running in Demo Mode - No account required!');
+                </script>
+                """
+            
+            # Insert the script before the closing </head> tag
+            html_content = html_content.replace('</head>', user_script + '</head>')
+            
             return HTMLResponse(content=html_content)
             
         except Exception as e:
             logger.error(f"Error serving bills page: {str(e)}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+
+    @router.get("/goals.html", response_class=HTMLResponse)
+    async def goals_page(request: Request, current_user: Optional[User] = Depends(optional_auth if not require_auth else get_current_user)):
+        """Serve the goals page"""
+        try:
+            # For production, check authentication
+            if require_auth and current_user is None:
+                return RedirectResponse(url="/login", status_code=302)
+                
+            goals_file = TEMPLATES_DIR / "goals.html"
+            if not goals_file.exists():
+                raise HTTPException(status_code=404, detail="Goals page not found")
+            
+            with open(goals_file, "r", encoding="utf-8") as f:
+                html_content = f.read()
+            
+            # Process template variables
+            html_content = process_template_variables(html_content)
+            
+            # Inject authentication state (same as home page)
+            if require_auth and current_user:
+                # Authenticated user in production
+                user_script = f"""
+                <script>
+                    window.isAuthenticated = true;
+                    window.demoMode = false;
+                    window.currentUser = {{
+                        id: {current_user.id},
+                        name: "{current_user.name}",
+                        email: "{current_user.email}"
+                    }};
+                    
+                    function getAuthToken() {{
+                        return 'cookie-auth';
+                    }}
+                    
+                    function isAuthenticated() {{
+                        return true;
+                    }}
+                </script>
+                """
+            else:
+                # Demo mode (dev environment)
+                user_script = """
+                <script>
+                    window.isAuthenticated = false;
+                    window.demoMode = true;
+                    window.currentUser = null;
+                    
+                    function getAuthToken() {
+                        return null;
+                    }
+                    
+                    function isAuthenticated() {
+                        return false;
+                    }
+                    
+                    console.log('🎭 Running in Demo Mode - No account required!');
+                </script>
+                """
+            
+            # Insert the script before the closing </head> tag
+            html_content = html_content.replace('</head>', user_script + '</head>')
+            
+            return HTMLResponse(content=html_content)
+            
+        except Exception as e:
+            logger.error(f"Error serving goals page: {str(e)}")
             raise HTTPException(status_code=500, detail="Internal server error")
     
     return router
@@ -164,7 +278,7 @@ def create_debug_routes() -> APIRouter:
         """Simple status check"""
         return {"message": "Server is working!", "status": "ok"}
     
-    @router.get("/auth")
+    @router.get("/debug/auth")
     async def debug_auth_status(request: Request):
         """Debug endpoint to check authentication status"""
         try:

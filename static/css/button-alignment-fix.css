@@ -3,10 +3,10 @@
 
 body .budget-panel #budget-form {
   display: flex !important;
-  flex-direction: row !important;
-  align-items: flex-end !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
   justify-content: flex-start !important;
-  gap: 16px !important;
+  gap: 24px !important;
   width: 100% !important;
   max-width: none !important;
   padding: 0 !important;
@@ -18,9 +18,8 @@ body .budget-panel #budget-form {
 
 /* Override all form sections */
 body .budget-panel #budget-form > div {
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: column !important;
+  width: 100% !important;
+  display: block !important;
   max-width: none !important;
 }
 
@@ -32,20 +31,28 @@ body .budget-panel #budget-form > div {
   width: 100% !important;
 }
 
-/* Add margin to button container and right align */
-body .budget-panel #budget-form > div:nth-child(3) {
-  margin-left: 16px !important;
-  align-items: flex-end !important;
+/* Fix form-group stacking */
+body .budget-panel #budget-form .form-group {
+  display: block !important;
+  width: 100% !important;
+  margin-bottom: 16px !important;
+}
+
+/* Button container - right align within the column */
+body .budget-panel #budget-form .form-actions {
+  display: flex !important;
   justify-content: flex-end !important;
+  width: 100% !important;
+  margin-top: 12px !important;
 }
 
 /* Override button styles */
-body .budget-panel #budget-form .submit-btn {
+body .budget-panel #budget-form .submit-btn,
+body .budget-panel #budget-form .btn-calculate {
   width: auto !important;
   max-width: none !important;
   min-width: 140px !important;
   margin: 0 !important;
-  align-self: flex-end !important;
 }
 
 /* Override labels */

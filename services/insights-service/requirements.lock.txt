@@ -1,0 +1,12 @@
+asgiref==3.9.1
+click==8.2.1
+colorama==0.4.6
+fastapi==0.68.2
+h11==0.16.0
+pydantic==1.10.22
+redis==4.6.0
+setuptools==80.9.0
+starlette==0.14.2
+typing_extensions==4.14.1
+uvicorn==0.15.0
+wheel==0.45.1

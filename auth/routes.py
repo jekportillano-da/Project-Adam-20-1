@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.responses import JSONResponse
 from datetime import timedelta
 import logging
@@ -94,8 +94,8 @@ async def login_user(user_credentials: UserLogin):
         # Set the token as an httpOnly cookie for security
         # Import config for cookie settings
         try:
-            from config import Settings
-            settings = Settings()
+            from settings import AppSettings
+            settings = AppSettings()
         except ImportError:
             # Fallback settings for development
             class FallbackSettings:
@@ -138,3 +138,16 @@ async def logout_user():
 async def get_current_user_info(current_user: UserResponse = Depends(get_current_active_user)):
     """Get current user information"""
     return current_user
+
+@router.get("/debug/cookies")
+async def debug_cookies(request: Request):
+    """Debug endpoint to see what cookies are being sent"""
+    cookies = dict(request.cookies)
+    headers = dict(request.headers)
+    
+    return {
+        "cookies": cookies,
+        "headers": headers,
+        "has_access_token": "access_token" in cookies,
+        "access_token_value": cookies.get("access_token", "NOT_FOUND")[:50] + "..." if cookies.get("access_token") else "NOT_FOUND"
+    }

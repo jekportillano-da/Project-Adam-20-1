@@ -1,9 +1,17 @@
 {
-    "python.defaultInterpreterPath": "C:/Users/bagal/Documents/OneDrive - PokitPal/Desktop/Git Repo/Project-Adam-20-1-1/.venv/Scripts/python.exe",
-    "python.terminal.activateEnvironment": true,
-    "python.analysis.extraPaths": [
-        "C:/Users/bagal/Documents/OneDrive - PokitPal/Desktop/Git Repo/Project-Adam-20-1-1/.venv/Lib/site-packages"
-    ],
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.typeCheckingMode": "basic"
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["-q"],
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}\\.venv\\Lib\\site-packages"
+  ],
+
+  "python.analysis.typeCheckingMode": "basic",
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.shellIntegration.enabled": true,
+  "terminal.integrated.shellIntegration.relaunch": true,
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.enableMultiLinePasteWarning": "auto"
 }

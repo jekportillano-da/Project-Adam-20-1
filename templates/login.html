@@ -160,6 +160,7 @@
                 </div>
 
                 <button type="submit" class="auth-btn" id="login-btn">Sign In</button>
+                <button type="button" class="auth-btn" id="debug-btn" style="background-color: #666; margin-top: 10px;" onclick="runDebugTest()">Debug Cookies</button>
             </form>
 
             <div class="auth-links">
@@ -185,15 +186,28 @@
         // Function to check if user is authenticated
         async function checkAuthStatus() {
             try {
+                console.log('Making auth check request to /auth/me...');
+                console.log('Document cookies:', document.cookie);
+                
                 const response = await fetch('/auth/me', {
                     method: 'GET',
                     credentials: 'include'  // Include cookies
                 });
 
-                console.log('Auth check response:', response.status, response.ok);
+                console.log('Auth check response:', {
+                    status: response.status,
+                    ok: response.ok,
+                    headers: Array.from(response.headers.entries())
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log('Auth check error response:', errorText);
+                }
+                
                 return response.ok;
             } catch (error) {
-                console.error('Auth check error:', error);
+                console.error('Auth check network error:', error);
                 return false;
             }
         }
@@ -212,6 +226,47 @@
                 console.error('Debug auth error:', error);
                 return null;
             }
+        }
+
+        // Function to debug cookies
+        async function debugCookies() {
+            try {
+                const response = await fetch('/auth/debug/cookies', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const cookies = await response.json();
+                console.log('Debug cookies:', cookies);
+                return cookies;
+            } catch (error) {
+                console.error('Debug cookies error:', error);
+                return null;
+            }
+        }
+
+        // Function to run complete debug test
+        async function runDebugTest() {
+            console.log('=== RUNNING DEBUG TEST ===');
+            
+            console.log('1. Current document cookies:', document.cookie);
+            
+            console.log('2. Testing /debug/auth endpoint...');
+            const authDebug = await debugAuthStatus();
+            
+            console.log('3. Testing /auth/debug/cookies endpoint...');
+            const cookieDebug = await debugCookies();
+            
+            console.log('4. Testing /auth/me endpoint...');
+            const authCheck = await checkAuthStatus();
+            
+            console.log('=== DEBUG SUMMARY ===');
+            console.log('Document cookies:', document.cookie);
+            console.log('Auth debug:', authDebug);
+            console.log('Cookie debug:', cookieDebug);
+            console.log('Auth check passed:', authCheck);
+            
+            // Show results in UI
+            showMessage(`Debug completed. Check console for details. Auth status: ${authCheck ? 'AUTHENTICATED' : 'NOT AUTHENTICATED'}`);
         }
 
         loginForm.addEventListener('submit', async (e) => {
@@ -249,14 +304,31 @@
                     
                     // Small delay to ensure cookie is set
                     setTimeout(async () => {
+                        console.log('Checking auth status after login...');
+                        await debugAuthStatus();
+                        
                         const authCheck = await checkAuthStatus();
                         console.log('Auth check after login:', authCheck);
                         
                         if (authCheck) {
+                            console.log('Authentication successful, redirecting...');
                             window.location.href = '/';
                         } else {
                             console.error('Auth check failed after successful login');
-                            showMessage('Authentication issue. Please try logging in again.');
+                            console.log('This might be a browser cookie issue. Login was successful on server.');
+                            
+                            // Try a longer delay for cookie propagation
+                            console.log('Trying again in 2 more seconds...');
+                            setTimeout(async () => {
+                                const retryCheck = await checkAuthStatus();
+                                if (retryCheck) {
+                                    console.log('Retry successful!');
+                                    window.location.href = '/';
+                                } else {
+                                    console.log('Retry failed - this appears to be a browser cookie issue');
+                                    showMessage('Authentication issue. Please try logging in again.');
+                                }
+                            }, 2000);
                         }
                     }, 1500);
                 } else {

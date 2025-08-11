@@ -7,11 +7,14 @@ Write-Host "Swagger docs: http://localhost:8080/docs" -ForegroundColor Cyan
 Write-Host ""
 
 try {
-    & python prod_server.py
+    $env:ENV = 'prod'
+    $env:PORT = '8080'
+    if (Test-Path .\.venv\Scripts\python.exe) {
+        & .\.venv\Scripts\python.exe .\main_prod.py
+    } else {
+        & python .\main_prod.py
+    }
 } catch {
     Write-Host "Error starting production server: $_" -ForegroundColor Red
     Write-Host "Make sure Python and required packages are installed" -ForegroundColor Yellow
 }
-
-Write-Host "Press any key to continue..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

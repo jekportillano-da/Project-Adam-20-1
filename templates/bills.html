@@ -52,6 +52,10 @@
           <li><a href="#" class="menu-item active" id="monthly-bills-link">Monthly Bills</a></li>
           <li><a href="#" class="menu-item disabled">Goals (Coming Soon)</a></li>
           <li><a href="#" class="menu-item disabled">Reports (Coming Soon)</a></li>
+          <li id="auth-separator" class="separator" style="display: none;"></li>
+          <li id="auth-login" style="display: none;"><a href="/login" class="menu-item">Login</a></li>
+          <li id="auth-register" style="display: none;"><a href="/register" class="menu-item">Register</a></li>
+          <li id="auth-logout" style="display: none;"><a href="#" class="menu-item" onclick="logout()">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -185,22 +189,249 @@
   </div>
 
   <!-- Scripts -->
-  <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bills.js') }}"></script>
   
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set up navigation links based on demo mode
-      const budgetInsightsLink = document.getElementById('budget-insights-link');
-      const monthlyBillsLink = document.getElementById('monthly-bills-link');
-      
-      if (window.demoMode) {
-        budgetInsightsLink.href = '/demo';
-        monthlyBillsLink.href = '/demo/bills';
-      } else {
-        budgetInsightsLink.href = '/';
-        monthlyBillsLink.href = '/bills';
+    // Authentication helper functions
+    function getAuthToken() {
+      // For httpOnly cookies, we can't access the token directly
+      return null;
+    }
+    
+    async function isAuthenticated() {
+      try {
+        const response = await fetch('/auth/me', {
+          method: 'GET',
+          credentials: 'include'  // Include cookies for authentication
+        });
+        return response.ok;
+      } catch (error) {
+        console.log('Auth check failed:', error);
+        return false;
       }
+    }
+    
+    function logout() {
+      // Call logout endpoint to clear httpOnly cookie
+      fetch('/auth/logout', { 
+        method: 'POST',
+        credentials: 'include'  // Include cookies for authentication
+      })
+        .then(() => {
+          updateAuthUI();
+          window.location.href = '/login';
+        });
+    }
+    
+    function showProfile() {
+      // For now, show a simple alert. In the future, this could open a profile modal
+      alert('Profile Settings feature coming soon! 🚀\n\nThis will include:\n• Change password\n• Update email\n• Account preferences\n• Export data');
+    }
+    
+    async function updateAuthUI() {
+      console.log('🔍 updateAuthUI called (bills page)');
+      const isAuth = await isAuthenticated();
+      console.log('🔍 isAuthenticated result:', isAuth);
+      const isDemoMode = window.demoMode || false;
+      const loginItem = document.getElementById('auth-login');
+      const registerItem = document.getElementById('auth-register');
+      const logoutItem = document.getElementById('auth-logout');
+      const separator = document.getElementById('auth-separator');
+      
+      console.log('🔍 DOM elements found:', {
+        loginItem: !!loginItem,
+        registerItem: !!registerItem, 
+        logoutItem: !!logoutItem,
+        separator: !!separator
+      });
+      
+      // Fetch user info if authenticated
+      let userInfo = null;
+      if (isAuth) {
+        try {
+          const response = await fetch('/auth/me', {
+            method: 'GET',
+            credentials: 'include'  // Include cookies for authentication
+          });
+          if (response.ok) {
+            userInfo = await response.json();
+            console.log('🔍 User info fetched:', userInfo);
+          }
+        } catch (error) {
+          console.log('🔍 Error fetching user info:', error);
+        }
+      }
+      
+      if (isDemoMode) {
+        console.log('🔍 Demo mode detected, hiding auth items');
+        // Hide all auth items in demo mode
+        if (loginItem) loginItem.style.display = 'none';
+        if (registerItem) registerItem.style.display = 'none';
+        if (logoutItem) logoutItem.style.display = 'none';
+        if (separator) separator.style.display = 'none';
+      } else if (isAuth) {
+        console.log('🔍 User authenticated, showing logout options');
+        // User is authenticated, show logout and profile
+        if (loginItem) {
+          loginItem.style.display = 'none';
+          console.log('🔍 Hidden login item');
+        }
+        if (registerItem) {
+          registerItem.style.display = 'none';
+          console.log('🔍 Hidden register item');
+        }
+        if (logoutItem) {
+          logoutItem.style.display = 'block';
+          console.log('🔍 Shown logout item');
+        }
+        if (separator) {
+          separator.style.display = 'block';
+          console.log('🔍 Shown separator');
+        }
+        
+        // Update user info display if available
+        if (userInfo && userInfo.email) {
+          const userInfoElement = document.createElement('div');
+          userInfoElement.className = 'dropdown-item user-info';
+          userInfoElement.innerHTML = `
+            <div style="padding: 8px 16px; border-bottom: 1px solid #eee; color: #666; font-size: 14px;">
+              <div>Logged in as:</div>
+              <div style="font-weight: 500; color: #333;">${userInfo.email}</div>
+            </div>
+          `;
+          
+          // Insert user info at the top of the dropdown
+          const dropdown = document.getElementById('profileDropdown');
+          if (dropdown && !dropdown.querySelector('.user-info')) {
+            dropdown.insertBefore(userInfoElement, dropdown.firstChild);
+            console.log('🔍 Added user info to dropdown');
+          }
+        }
+      } else {
+        console.log('🔍 User not authenticated, showing login options');
+        // User is not authenticated, show login and register
+        if (loginItem) {
+          loginItem.style.display = 'block';
+          console.log('🔍 Shown login item');
+        }
+        if (registerItem) {
+          registerItem.style.display = 'block';
+          console.log('🔍 Shown register item');
+        }
+        if (logoutItem) {
+          logoutItem.style.display = 'none';
+          console.log('🔍 Hidden logout item');
+        }
+        if (separator) {
+          separator.style.display = 'none';
+          console.log('🔍 Hidden separator');
+        }
+        
+        // Remove user info if it exists
+        const existingUserInfo = document.querySelector('.user-info');
+        if (existingUserInfo) {
+          existingUserInfo.remove();
+          console.log('🔍 Removed user info from dropdown');
+        }
+      }
+    }
+    
+    // Dropdown functionality and navigation setup for bills page
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🔍 Bills page loaded, initializing auth UI...');
+      
+      // Initialize auth UI first
+      updateAuthUI().then(() => {
+        console.log('🔍 Auth UI initialization complete');
+      });
+      
+      // Set up dropdown functionality
+      const profileIcon = document.getElementById('profileIcon');
+      const profileDropdown = document.getElementById('profileDropdown');
+      
+      if (profileIcon && profileDropdown) {
+        // Toggle dropdown menu when profile icon is clicked
+        profileIcon.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Profile icon clicked');
+          
+          // Toggle dropdown immediately for responsive UI
+          profileDropdown.classList.toggle('active');
+          
+          // Update auth UI to reflect current state
+          await updateAuthUI();
+        });
+        
+        // Close dropdown when clicking anywhere else on the page
+        document.addEventListener('click', (e) => {
+          if (!profileDropdown.contains(e.target) && !profileIcon.contains(e.target)) {
+            profileDropdown.classList.remove('active');
+          }
+        });
+      } else {
+        console.error('Profile elements not found');
+      }
+      
+      // Wait for demo mode to be set, then configure navigation
+      setTimeout(() => {
+        // Set up navigation links based on demo mode
+        const budgetInsightsLink = document.getElementById('budget-insights-link');
+        const monthlyBillsLink = document.getElementById('monthly-bills-link');
+        
+        console.log('Setting up navigation links, demoMode:', window.demoMode);
+        console.log('budgetInsightsLink:', budgetInsightsLink);
+        console.log('monthlyBillsLink:', monthlyBillsLink);
+        
+        if (window.demoMode) {
+          console.log('Demo mode detected, setting demo links');
+          if (budgetInsightsLink) {
+            budgetInsightsLink.href = '/demo';
+            console.log('Set budget insights link to /demo');
+          }
+          if (monthlyBillsLink) {
+            monthlyBillsLink.href = '/demo/bills';
+            monthlyBillsLink.classList.remove('disabled');
+            console.log('Set monthly bills link to /demo/bills');
+          }
+        } else {
+          console.log('Production mode detected, setting prod links');
+          if (budgetInsightsLink) {
+            budgetInsightsLink.href = '/';
+          }
+          if (monthlyBillsLink) {
+            monthlyBillsLink.href = '/bills';
+            monthlyBillsLink.classList.remove('disabled');
+          }
+        }
+        
+        // Add click handlers for navigation links
+        if (budgetInsightsLink) {
+          budgetInsightsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Budget insights clicked, navigating to:', budgetInsightsLink.href);
+            if (budgetInsightsLink.href && budgetInsightsLink.href !== '#' && budgetInsightsLink.href !== window.location.href + '#') {
+              profileDropdown.classList.remove('active');
+              window.location.href = budgetInsightsLink.href;
+            }
+          });
+        }
+        
+        if (monthlyBillsLink) {
+          monthlyBillsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Monthly bills clicked, navigating to:', monthlyBillsLink.href);
+            if (!monthlyBillsLink.classList.contains('disabled') && monthlyBillsLink.href && monthlyBillsLink.href !== '#' && monthlyBillsLink.href !== window.location.href + '#') {
+              profileDropdown.classList.remove('active');
+              window.location.href = monthlyBillsLink.href;
+            }
+          });
+        }
+        
+        // Log final hrefs for debugging
+        console.log('Final Budget Insights href:', budgetInsightsLink?.href);
+        console.log('Final Monthly Bills href:', monthlyBillsLink?.href);
+      }, 100); // Small delay to ensure demo mode is set
     });
   </script>
 </body>

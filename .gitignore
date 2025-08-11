@@ -48,6 +48,24 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+
+# Temporary files and cache
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Test artifacts 
+test_*.json
+debug_*.json
+*_data.json
+cookies.txt
+
+# Quick test files
+quick_test.py
+simple_test.py
+manual_*.py
 .pytest_cache/
 cover/
 

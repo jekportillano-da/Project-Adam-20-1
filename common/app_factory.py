@@ -92,5 +92,26 @@ def create_app(settings) -> FastAPI:
     
     app.include_router(main_router)
     app.include_router(debug_router)
+
+    # Include API gateway routes for microservices
+    try:
+        from common.api_gateway import create_api_routes
+        app.include_router(create_api_routes(settings))
+    except Exception as e:
+        logger.warning(f"API gateway routes not loaded: {e}")
+
+    # Include AI routes (feature-gated by env inside the router as needed)
+    try:
+        from ai import ai_router
+        app.include_router(ai_router)
+    except Exception as e:
+        logger.warning(f"AI routes not loaded: {e}")
+
+    # Include Goals routes for financial goal tracking
+    try:
+        from goals.routes import goals_bp
+        app.include_router(goals_bp)
+    except Exception as e:
+        logger.warning(f"Goals routes not loaded: {e}")
     
     return app

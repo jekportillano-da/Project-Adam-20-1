@@ -1,19 +1,306 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('budget-form');
     const suggestionBox = document.getElementById('suggestion');
-    const submitButton = form.querySelector('button[type="submit"]');
+    const submitButton = document.querySelector('button[type="submit"]'); // Changed: Find button anywhere in document
     const exportButton = document.getElementById('export-budget');
+    const templateSelect = document.getElementById('budget-template');
+    const budgetInput = document.getElementById('budget');
     
     // Store budget data for export
     let currentBudgetData = null;
 
-    function showLoading(isLoading) {
-        submitButton.disabled = isLoading;
-        submitButton.innerHTML = isLoading ? 
-            '<span class="spinner"></span> Calculating...' : 
-            'Calculate Budget';
+    // Template functionality
+    const budgetTemplates = {
+        'fresh_graduate': {
+            name: 'Fresh Graduate',
+            income_range: [18000, 25000],
+            allocations: {
+                'Food & Dining': 25,
+                'Transportation': 15,
+                'Utilities': 12,
+                'Personal Care': 8,
+                'Entertainment': 10,
+                'Emergency Fund': 15,
+                'Savings': 15
+            }
+        },
+        'young_professional': {
+            name: 'Young Professional',
+            income_range: [25000, 40000],
+            allocations: {
+                'Food & Dining': 22,
+                'Transportation': 18,
+                'Utilities': 15,
+                'Personal Care': 7,
+                'Entertainment': 8,
+                'Emergency Fund': 15,
+                'Savings': 15
+            }
+        },
+        'family_breadwinner': {
+            name: 'Family Breadwinner',
+            income_range: [35000, 60000],
+            allocations: {
+                'Food & Dining': 30,
+                'Transportation': 15,
+                'Utilities': 20,
+                'Personal Care': 5,
+                'Entertainment': 5,
+                'Emergency Fund': 15,
+                'Savings': 10
+            }
+        },
+        'ofw_remittance': {
+            name: 'OFW Remittance Manager',
+            income_range: [40000, 80000],
+            allocations: {
+                'Food & Dining': 20,
+                'Transportation': 10,
+                'Utilities': 15,
+                'Personal Care': 5,
+                'Entertainment': 10,
+                'Emergency Fund': 20,
+                'Savings': 20
+            }
+        },
+        'senior_executive': {
+            name: 'Senior Executive',
+            income_range: [60000, 120000],
+            allocations: {
+                'Food & Dining': 20,
+                'Transportation': 12,
+                'Utilities': 10,
+                'Personal Care': 8,
+                'Entertainment': 10,
+                'Emergency Fund': 20,
+                'Savings': 20
+            }
+        },
+        'entrepreneur': {
+            name: 'Entrepreneur',
+            income_range: [30000, 150000],
+            allocations: {
+                'Food & Dining': 18,
+                'Transportation': 15,
+                'Utilities': 12,
+                'Personal Care': 5,
+                'Entertainment': 10,
+                'Emergency Fund': 25,
+                'Savings': 15
+            }
+        }
+    };
+
+    // Handle template selection
+    if (templateSelect) {
+        templateSelect.addEventListener('change', function() {
+            const selectedTemplate = this.value;
+            
+            if (selectedTemplate && budgetTemplates[selectedTemplate]) {
+                const template = budgetTemplates[selectedTemplate];
+                
+                // Show template info
+                showTemplateInfo(template);
+                
+                // If budget is entered, show preview
+                const budgetValue = parseFloat(budgetInput.value.replace(/[^0-9.]/g, ''));
+                if (budgetValue && budgetValue > 0) {
+                    showTemplatePreview(template, budgetValue);
+                }
+            } else {
+                hideTemplateInfo();
+            }
+        });
+    }
+
+    // Handle budget input changes to update template preview
+    if (budgetInput) {
+        budgetInput.addEventListener('input', function() {
+            const selectedTemplate = templateSelect?.value;
+            
+            if (selectedTemplate && budgetTemplates[selectedTemplate]) {
+                const template = budgetTemplates[selectedTemplate];
+                const budgetValue = parseFloat(this.value.replace(/[^0-9.]/g, ''));
+                
+                if (budgetValue && budgetValue > 0) {
+                    showTemplatePreview(template, budgetValue);
+                }
+            }
+        });
+    }
+
+    function showTemplateInfo(template) {
+        const existingInfo = document.querySelector('.template-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+
+        const templateInfo = document.createElement('div');
+        templateInfo.className = 'template-info';
+        templateInfo.innerHTML = `
+            <div style="background: linear-gradient(135deg, #1B4965, #5FA8D3); color: white; padding: 15px; border-radius: 8px; margin: 10px 0; box-shadow: 0 4px 12px rgba(27, 73, 101, 0.2);">
+                <h4 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">📋 ${template.name} Template</h4>
+                <p style="margin: 0 0 12px 0; font-size: 14px; color: rgba(255, 255, 255, 0.9);">
+                    Recommended for income: ₱${template.income_range[0].toLocaleString()} - ₱${template.income_range[1].toLocaleString()}
+                </p>
+                <button onclick="suggestBudgetAmount('${Object.keys(budgetTemplates).find(key => budgetTemplates[key] === template)}')" 
+                        style="background: rgba(255, 255, 255, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.3); padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.2s; font-weight: 600;"
+                        onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" 
+                        onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'">
+                    💡 Suggest Budget Amount
+                </button>
+            </div>
+        `;
+
+        templateSelect.parentNode.appendChild(templateInfo);
+    }
+
+    function showTemplatePreview(template, budget) {
+        let existingPreview = document.querySelector('.template-preview');
+        if (existingPreview) {
+            existingPreview.remove();
+        }
+
+        const preview = document.createElement('div');
+        preview.className = 'template-preview';
+        preview.innerHTML = `
+            <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin: 10px 0;">
+                <h5 style="margin: 0 0 12px 0; color: #333; font-size: 14px;">💡 Template Preview (₱${budget.toLocaleString()})</h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    ${Object.entries(template.allocations).map(([category, percentage]) => {
+                        const amount = Math.round(budget * percentage / 100);
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
+                                <span style="font-size: 13px; color: #666;">${category}</span>
+                                <span style="font-weight: bold; color: #333;">₱${amount.toLocaleString()}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <button type="button" onclick="applyTemplate('${Object.keys(budgetTemplates).find(key => budgetTemplates[key] === template)}')" 
+                        style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; margin-top: 10px; cursor: pointer; font-size: 12px;">
+                    ✨ Apply This Template
+                </button>
+            </div>
+        `;
+
+        const templateInfo = document.querySelector('.template-info');
+        if (templateInfo) {
+            templateInfo.appendChild(preview);
+        }
+    }
+
+    function hideTemplateInfo() {
+        const existingInfo = document.querySelector('.template-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+    }
+
+    // Global function to suggest budget amount based on template range
+    window.suggestBudgetAmount = function(templateId) {
+        const template = budgetTemplates[templateId];
+        if (!template) return;
+
+        const [minAmount, maxAmount] = template.income_range;
+        const suggestedAmount = Math.round((minAmount + maxAmount) / 2);
         
-        if (isLoading) {
+        // Fill the budget input with suggested amount
+        budgetInput.value = suggestedAmount.toLocaleString('en-US');
+        
+        // Trigger the input event to update formatting and show preview
+        budgetInput.dispatchEvent(new Event('input'));
+        
+        // Show confirmation message
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #1B4965, #5FA8D3);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(27, 73, 101, 0.3);
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease-out;
+        `;
+        notification.innerHTML = `💡 Budget set to ₱${suggestedAmount.toLocaleString()} (recommended midpoint)`;
+        
+        document.body.appendChild(notification);
+        
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideIn 0.3s ease-out reverse';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    };
+
+    // Global function to apply template (called from button click)
+    window.applyTemplate = function(templateId) {
+        const template = budgetTemplates[templateId];
+        const budgetValue = parseFloat(budgetInput.value.replace(/[^0-9.]/g, ''));
+        
+        if (!template || !budgetValue) {
+            alert('Please enter a budget amount first');
+            return;
+        }
+
+        // Add template data to form submission
+        const templateData = {
+            template_id: templateId,
+            template_name: template.name,
+            allocations: {}
+        };
+
+        Object.entries(template.allocations).forEach(([category, percentage]) => {
+            templateData.allocations[category] = Math.round(budgetValue * percentage / 100);
+        });
+
+        // Store template data for use in form submission
+        form.templateData = templateData;
+
+        // Show confirmation
+        const confirmationDiv = document.createElement('div');
+        confirmationDiv.className = 'template-applied';
+        confirmationDiv.innerHTML = `
+            <div style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0;">
+                ✅ Template applied! Your budget will use the <strong>${template.name}</strong> allocation when calculated.
+            </div>
+        `;
+
+        const preview = document.querySelector('.template-preview');
+        if (preview) {
+            preview.appendChild(confirmationDiv);
+        }
+
+        setTimeout(() => {
+            const applied = document.querySelector('.template-applied');
+            if (applied) applied.remove();
+        }, 3000);
+    };
+
+    function showLoading(isLoading) {
+        if (submitButton) {
+            submitButton.disabled = isLoading;
+            submitButton.innerHTML = isLoading ? 
+                '<span class="spinner"></span> Calculating...' : 
+                'CALCULATE BUDGET';
+        }
+        
+        if (isLoading && suggestionBox) {
             suggestionBox.innerHTML = '<div class="loading">Analyzing your budget...</div>';
         }
     }
@@ -155,17 +442,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show AI loading state
             showAILoading();
 
-            // First, get AI-powered budget tips from GROQ
-            const aiTipsData = await fetchFromAPI('/api/tip', {
+            // Prepare data for AI tips - include template data if available
+            const aiRequestData = {
                 budget: cleanBudget,
                 duration: duration
-            });
+            };
 
-            // Get budget breakdown through gateway
-            const breakdownData = await fetchFromAPI('/api/budget/calculate', {
+            // Add template information if a template was applied
+            if (form.templateData) {
+                aiRequestData.template = form.templateData;
+                aiRequestData.template_applied = true;
+            }
+
+            // First, get AI-powered budget tips from GROQ
+            const aiTipsData = await fetchFromAPI('/api/tip', aiRequestData);
+
+            // Get budget breakdown through gateway - include template data
+            const breakdownRequestData = {
                 amount: cleanBudget,
                 duration
-            });
+            };
+
+            if (form.templateData) {
+                breakdownRequestData.template = form.templateData;
+            }
+
+            const breakdownData = await fetchFromAPI('/api/budget/calculate', breakdownRequestData);
 
             // Calculate savings forecast through gateway
             const savingsData = await fetchFromAPI('/api/savings/forecast', {
@@ -206,7 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Enhanced input validation with real-time formatting
-    const budgetInput = document.getElementById('budget');
     
     budgetInput.addEventListener('input', (e) => {
         let value = e.target.value.replace(/[^0-9.]/g, '');
@@ -722,24 +1023,129 @@ document.addEventListener('DOMContentLoaded', () => {
             // Remove loading class if present
             aiPanel.classList.remove('loading');
             
-            // Format the AI tips content
-            const formattedContent = aiTips.tip.split('\n').map(line => {
-                if (line.trim() === '') return '';
-                if (line.includes('🤖') || line.includes('�') || line.includes('🎯') || line.includes('💡') || line.includes('�')) {
-                    return `<h4>${line.trim()}</h4>`;
+            // Format the AI tips content with enhanced structure and news links
+            const lines = aiTips.tip.split('\n');
+            let formattedContent = '';
+            let inList = false;
+            
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    return;
                 }
-                if (line.startsWith('•') || line.match(/^\d+\./)) {
-                    return `<li>${line.trim()}</li>`;
+                
+                // Handle headers (lines starting with ## or ### for markdown-style headers)
+                if (trimmed.startsWith('##')) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    const headerText = trimmed.replace(/^###+\s*/, '');
+                    const headerLevel = trimmed.startsWith('###') ? 'h5' : 'h4';
+                    formattedContent += `<${headerLevel} class="ai-section-header">${headerText}</${headerLevel}>`;
                 }
-                return `<p>${line.trim()}</p>`;
-            }).join('');
+                // Handle emoji headers (lines starting with emojis or **text**)
+                else if (trimmed.match(/^[🤖💡📊🎯💰📰⚠️]/)) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    formattedContent += `<h4 class="ai-section-header">${trimmed}</h4>`;
+                }
+                // Handle bold sections
+                else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    const text = trimmed.slice(2, -2);
+                    formattedContent += `<h5 class="ai-subsection">${text}</h5>`;
+                }
+                // Handle news links and external links
+                else if (trimmed.includes('[') && trimmed.includes('](')) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    // Parse markdown-style links [text](url)
+                    const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
+                    const processedLine = trimmed.replace(linkRegex, (match, text, url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-news-link">
+                            ${text} 🔗
+                        </a>`;
+                    });
+                    formattedContent += `<p class="ai-insight ai-with-links">${processedLine}</p>`;
+                }
+                // Handle list items
+                else if (trimmed.startsWith('•') || trimmed.startsWith('- ')) {
+                    if (!inList) {
+                        formattedContent += '<ul class="ai-recommendations">';
+                        inList = true;
+                    }
+                    let text = trimmed.replace(/^[•-]\s*/, '');
+                    
+                    // Process links within list items
+                    const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
+                    text = text.replace(linkRegex, (match, linkText, url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-news-link">
+                            ${linkText} 🔗
+                        </a>`;
+                    });
+                    
+                    formattedContent += `<li>${text}</li>`;
+                }
+                // Handle special alert lines (starting with ⚠️, 💡, 📈, etc.)
+                else if (trimmed.match(/^[⚠️💡📈⛽⚡🎯]/)) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    formattedContent += `<div class="ai-alert">${trimmed}</div>`;
+                }
+                // Handle source citations (lines starting with *Sources:*)
+                else if (trimmed.startsWith('*Sources:') && trimmed.endsWith('*')) {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    const sourceText = trimmed.slice(1, -1); // Remove asterisks
+                    formattedContent += `<div class="ai-sources">${sourceText}</div>`;
+                }
+                // Handle regular paragraphs
+                else {
+                    if (inList) {
+                        formattedContent += '</ul>';
+                        inList = false;
+                    }
+                    // Process links in regular paragraphs too
+                    let processedLine = trimmed;
+                    const linkRegex = /\[([^\]]+)\]\(([^\)]+)\)/g;
+                    processedLine = processedLine.replace(linkRegex, (match, text, url) => {
+                        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="ai-news-link">
+                            ${text} 🔗
+                        </a>`;
+                    });
+                    formattedContent += `<p class="ai-insight">${processedLine}</p>`;
+                }
+            });
+            
+            // Close any open list
+            if (inList) {
+                formattedContent += '</ul>';
+            }
             
             aiContent.innerHTML = formattedContent;
         } else {
             // Show placeholder message if no tips
             aiContent.innerHTML = `
                 <div class="ai-insights-placeholder">
-                    💡 Please enter a budget amount and calculate to generate personalized AI insights and money-saving tips!
+                    <div class="placeholder-icon">💡</div>
+                    <h4>AI-Powered Insights</h4>
+                    <p>Enter your budget and click "Calculate Budget" to get personalized financial insights and smart recommendations!</p>
                 </div>
             `;
         }

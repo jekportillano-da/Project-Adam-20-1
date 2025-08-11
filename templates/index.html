@@ -8,118 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
   <!-- Scripts -->
-  <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
   <script src="{{ url_for('static', filename='js/input-alignment.js') }}"></script>
   <script src="{{ url_for('static', filename='js/zoom-alignment-fix.js') }}"></script>
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   
   <script>
-    // Authentication helper functions
-    function getAuthToken() {
-      return localStorage.getItem('access_token');
-    }
-    
-    function isAuthenticated() {
-      return !!getAuthToken();
-    }
-    
-    function logout() {
-      localStorage.removeItem('access_token');
-      updateAuthUI();
-      // Redirect to login page
-      window.location.href = '/login';
-    }
-    
-    function updateAuthUI() {
-      const isAuth = isAuthenticated();
-      const isDemoMode = window.demoMode || false;
-      const loginItem = document.getElementById('auth-login');
-      const registerItem = document.getElementById('auth-register');
-      const logoutItem = document.getElementById('auth-logout');
-      const separator = document.getElementById('auth-separator');
-      
-      // Update menu items based on auth status and demo mode
-      const menuItems = document.querySelectorAll('.menu-item');
-      menuItems.forEach(item => {
-        if (item.textContent.includes('Budget Insights')) {
-          if (isDemoMode) {
-            item.href = '/demo';
-          } else {
-            item.href = isAuth ? '/' : '/demo';
-          }
-        } else if (item.textContent.includes('Monthly Bills')) {
-          if (isDemoMode) {
-            item.href = '/demo/bills';
-            item.classList.remove('disabled');
-            item.textContent = 'Monthly Bills';
-          } else if (isAuth) {
-            item.href = '/bills';
-            item.classList.remove('disabled');
-            item.textContent = 'Monthly Bills';
-          } else {
-            item.href = '/demo/bills';
-            item.classList.remove('disabled');
-            item.textContent = 'Monthly Bills (Demo)';
-          }
-        }
-      });
-      
-      if (isAuth) {
-        loginItem.style.display = 'none';
-        registerItem.style.display = 'none';
-        logoutItem.style.display = 'block';
-        
-        // Show user info if available
-        if (window.currentUser) {
-          const existingUserInfo = document.querySelector('.user-info-item');
-          if (!existingUserInfo) {
-            const userInfo = document.createElement('li');
-            userInfo.className = 'user-info-item';
-            userInfo.innerHTML = `<span class="menu-item" style="font-weight: 500; color: var(--primary-color);">Welcome, ${window.currentUser.name}</span>`;
-            separator.parentNode.insertBefore(userInfo, separator);
-          }
-        }
-      } else {
-        loginItem.style.display = 'block';
-        registerItem.style.display = 'block';
-        logoutItem.style.display = 'none';
-        
-        // Remove user info if it exists
-        const existingUserInfo = document.querySelector('.user-info-item');
-        if (existingUserInfo) {
-          existingUserInfo.remove();
-        }
-        
-        // Add demo mode indicator if in demo
-        if (isDemoMode) {
-          const existingDemoInfo = document.querySelector('.demo-info-item');
-          if (!existingDemoInfo) {
-            const demoInfo = document.createElement('li');
-            demoInfo.className = 'demo-info-item';
-            demoInfo.innerHTML = `<span class="menu-item" style="font-weight: 500; color: var(--warning-color);">🎭 Demo Mode</span>`;
-            separator.parentNode.insertBefore(demoInfo, separator);
-          }
-        }
-      }
-    }
-    
-    // Override the original API call to include authentication
-    const originalFetch = window.fetch;
-    window.fetch = function(url, options = {}) {
-      const token = getAuthToken();
-      if (token && url.startsWith('/api')) {
-        options.headers = {
-          ...options.headers,
-          'Authorization': `Bearer ${token}`
-        };
-      }
-      return originalFetch(url, options);
-    };
-    
-    // Initialize auth UI when page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      updateAuthUI();
-    });
+    // Authentication functions moved to bottom script section to resolve scope issues
   </script>
   
   <!-- Google Fonts -->
@@ -162,7 +56,7 @@
         <ul class="menu-items">
           <li><a href="#" class="menu-item active" id="budget-insights-link">Budget Insights</a></li>
           <li><a href="#" class="menu-item" id="monthly-bills-link">Monthly Bills</a></li>
-          <li><a href="#" class="menu-item disabled">Goals (Coming Soon)</a></li>
+          <li><a href="/goals.html" class="menu-item" id="goals-link">📋 Goals</a></li>
           <li><a href="#" class="menu-item disabled">Reports (Coming Soon)</a></li>
           <li id="auth-separator" style="border-top: 1px solid var(--border-color); margin: 0.5rem 0;"></li>
           <li id="auth-login"><a href="/login" class="menu-item">Login</a></li>
@@ -181,75 +75,86 @@
         <p>Enter your budget details below</p>
       </div>
 
-      <!-- Improved vertical layout like a standard login form -->
-      <div class="form-container" style="width: 100%; max-width: 400px; margin: 0 auto;">
-        <form id="budget-form" style="display: flex; flex-direction: column; gap: 20px; width: 100%; padding: 24px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+      <!-- Clean form layout like a standard login form -->
+      <div class="form-container">
+        <form id="budget-form" class="budget-form-modern" style="display: flex !important; flex-direction: column !important; width: 100% !important; gap: 20px !important;">
+          
+          <!-- Smart Template Selection -->
+          <div class="form-group" style="display: block !important; width: 100% !important; margin-bottom: 15px !important;">
+            <label for="budget-template">
+              🎯 Smart Budget Template (Optional)
+            </label>
+            <select id="budget-template" class="form-input" style="width: 100% !important; display: block !important;">
+              <option value="">Choose a template or enter manually</option>
+              <option value="fresh_graduate">Fresh Graduate (₱18K-25K)</option>
+              <option value="young_professional">Young Professional (₱25K-35K)</option>
+              <option value="family_breadwinner">Family Breadwinner (₱40K-60K)</option>
+              <option value="ofw_remittance">OFW Budget (₱50K-80K)</option>
+              <option value="senior_executive">Senior Executive (₱80K+)</option>
+              <option value="entrepreneur">Entrepreneur/Freelancer</option>
+            </select>
+            <small class="form-hint">
+              💡 Templates auto-fill optimal budget allocations for your lifestyle
+            </small>
+          </div>
           
           <!-- Budget Amount Field -->
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
-            <label for="budget" style="font-weight: 600; color: var(--text-color); font-size: 14px; text-align: left;">
+          <div class="form-group" style="display: block !important; width: 100% !important; margin-bottom: 15px !important;">
+            <label for="budget">
               Budget Amount (PHP)
             </label>
             <input 
               type="text" 
               id="budget" 
+              class="form-input"
               placeholder="Enter amount (e.g., 10,000)" 
               pattern="^[0-9,]*\.?[0-9]*$"
               required
               autocomplete="off"
               inputmode="numeric"
-              style="padding: 14px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; text-align: left; transition: border-color 0.2s ease; background: white;"
-              onfocus="this.style.borderColor='#4CAF50'"
-              onblur="this.style.borderColor='#e1e5e9'"
+              style="width: 100% !important; display: block !important;"
             >
           </div>
           
           <!-- Time Period Field -->
-          <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
-            <label for="duration" style="font-weight: 600; color: var(--text-color); font-size: 14px; text-align: left;">
+          <div class="form-group" style="display: block !important; width: 100% !important; margin-bottom: 15px !important;">
+            <label for="duration">
               Time Period
             </label>
-            <select 
-              id="duration" 
-              required
-              style="padding: 14px 16px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; background: white; cursor: pointer; transition: border-color 0.2s ease;"
-              onfocus="this.style.borderColor='#4CAF50'"
-              onblur="this.style.borderColor='#e1e5e9'"
-            >
+            <select id="duration" class="form-input" required style="width: 100% !important; display: block !important;">
               <option value="daily" selected>Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
             </select>
           </div>
-          
-          <!-- Submit Button - Right Aligned -->
-          <div class="form-actions" style="display: flex; justify-content: flex-end; margin-top: 16px; padding-top: 8px;">
-            <button 
-              type="submit"
-              class="submit-btn"
-              style="
-                padding: 14px 28px;
-                background: linear-gradient(135deg, #4CAF50, #45a049);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-                min-width: 160px;
-              "
-              onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.4)'"
-              onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(76, 175, 80, 0.3)'"
-            >
-              CALCULATE BUDGET
-            </button>
-          </div>
+        </form>
+        
+        <!-- Submit Button - Moved Outside Form for Independent Right Alignment -->
+        <div class="form-actions" style="display: flex !important; justify-content: flex-end !important; width: 100% !important; margin-top: 20px !important;">
+          <button type="submit" form="budget-form" class="btn-calculate" style="
+            padding: 16px 32px !important;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 4px 16px rgba(27, 73, 101, 0.3) !important;
+            min-width: 180px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            position: relative !important;
+            overflow: hidden !important;
+          " onmouseover="this.style.background='linear-gradient(135deg, #1B4965, #4A90A4)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(27, 73, 101, 0.4)'" onmouseout="this.style.background='linear-gradient(135deg, #1B4965, #5FA8D3)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(27, 73, 101, 0.3)'">
+            CALCULATE BUDGET
+          </button>
+        </div>
         </form>
         
         <!-- Results Section -->
-        <div id="suggestion" class="budget-results" style="margin-top: 24px;"></div>
+        <div id="suggestion" class="budget-results"></div>
       </div>
     </div>
 
@@ -335,27 +240,254 @@
   </div>
 
   <!-- Scripts -->
-  <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
   <script src="{{ url_for('static', filename='js/input-alignment.js') }}"></script>
   <script src="{{ url_for('static', filename='js/zoom-alignment-fix.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bills.js') }}"></script>
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set up navigation links based on demo mode
-      const budgetInsightsLink = document.getElementById('budget-insights-link');
-      const monthlyBillsLink = document.getElementById('monthly-bills-link');
-      
-      if (window.demoMode) {
-        budgetInsightsLink.href = '/demo';
-        monthlyBillsLink.href = '/demo/bills';
-        monthlyBillsLink.classList.remove('disabled');
-      } else {
-        budgetInsightsLink.href = '/';
-        monthlyBillsLink.href = '/bills';
-        monthlyBillsLink.classList.remove('disabled');
+    // Authentication helper functions
+    function getAuthToken() {
+      // For httpOnly cookies, we can't access the token directly
+      return null;
+    }
+    
+    async function isAuthenticated() {
+      try {
+        const response = await fetch('/auth/me', {
+          method: 'GET',
+          credentials: 'include'  // Include cookies for authentication
+        });
+        return response.ok;
+      } catch (error) {
+        console.log('Auth check failed:', error);
+        return false;
       }
+    }
+    
+    function logout() {
+      // Call logout endpoint to clear httpOnly cookie
+      fetch('/auth/logout', { 
+        method: 'POST',
+        credentials: 'include'  // Include cookies for authentication
+      })
+        .then(() => {
+          updateAuthUI();
+          window.location.href = '/login';
+        });
+    }
+    
+    function showProfile() {
+      // For now, show a simple alert. In the future, this could open a profile modal
+      alert('Profile Settings feature coming soon! 🚀\n\nThis will include:\n• Change password\n• Update email\n• Account preferences\n• Export data');
+    }
+    
+    async function updateAuthUI() {
+      console.log('🔍 updateAuthUI called');
+      const isAuth = await isAuthenticated();
+      console.log('🔍 isAuthenticated result:', isAuth);
+      const isDemoMode = window.demoMode || false;
+      const loginItem = document.getElementById('auth-login');
+      const registerItem = document.getElementById('auth-register');
+      const logoutItem = document.getElementById('auth-logout');
+      const separator = document.getElementById('auth-separator');
+      
+      console.log('🔍 DOM elements found:', {
+        loginItem: !!loginItem,
+        registerItem: !!registerItem, 
+        logoutItem: !!logoutItem,
+        separator: !!separator
+      });
+      
+      // Fetch user info if authenticated
+      let userInfo = null;
+      if (isAuth) {
+        try {
+          const response = await fetch('/auth/me', {
+            method: 'GET',
+            credentials: 'include'  // Include cookies for authentication
+          });
+          if (response.ok) {
+            userInfo = await response.json();
+            console.log('🔍 User info fetched:', userInfo);
+          }
+        } catch (error) {
+          console.log('🔍 Error fetching user info:', error);
+        }
+      }
+      
+      if (isDemoMode) {
+        console.log('🔍 Demo mode detected, hiding auth items');
+        // Hide all auth items in demo mode
+        if (loginItem) loginItem.style.display = 'none';
+        if (registerItem) registerItem.style.display = 'none';
+        if (logoutItem) logoutItem.style.display = 'none';
+        if (separator) separator.style.display = 'none';
+      } else if (isAuth) {
+        console.log('🔍 User authenticated, showing logout options');
+        // User is authenticated, show logout and profile
+        if (loginItem) {
+          loginItem.style.display = 'none';
+          console.log('🔍 Hidden login item');
+        }
+        if (registerItem) {
+          registerItem.style.display = 'none';
+          console.log('🔍 Hidden register item');
+        }
+        if (logoutItem) {
+          logoutItem.style.display = 'block';
+          console.log('🔍 Shown logout item');
+        }
+        if (separator) {
+          separator.style.display = 'block';
+          console.log('🔍 Shown separator');
+        }
+        
+        // Update user info display if available
+        if (userInfo && userInfo.email) {
+          const userInfoElement = document.createElement('div');
+          userInfoElement.className = 'dropdown-item user-info';
+          userInfoElement.innerHTML = `
+            <div style="padding: 8px 16px; border-bottom: 1px solid #eee; color: #666; font-size: 14px;">
+              <div>Logged in as:</div>
+              <div style="font-weight: 500; color: #333;">${userInfo.email}</div>
+            </div>
+          `;
+          
+          // Insert user info at the top of the dropdown
+          const dropdown = document.getElementById('profileDropdown');
+          if (dropdown && !dropdown.querySelector('.user-info')) {
+            dropdown.insertBefore(userInfoElement, dropdown.firstChild);
+            console.log('🔍 Added user info to dropdown');
+          }
+        }
+      } else {
+        console.log('🔍 User not authenticated, showing login options');
+        // User is not authenticated, show login and register
+        if (loginItem) {
+          loginItem.style.display = 'block';
+          console.log('🔍 Shown login item');
+        }
+        if (registerItem) {
+          registerItem.style.display = 'block';
+          console.log('🔍 Shown register item');
+        }
+        if (logoutItem) {
+          logoutItem.style.display = 'none';
+          console.log('🔍 Hidden logout item');
+        }
+        if (separator) {
+          separator.style.display = 'none';
+          console.log('🔍 Hidden separator');
+        }
+        
+        // Remove user info if it exists
+        const existingUserInfo = document.querySelector('.user-info');
+        if (existingUserInfo) {
+          existingUserInfo.remove();
+          console.log('🔍 Removed user info from dropdown');
+        }
+      }
+    }
+    
+    // Dropdown functionality and navigation setup
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🔍 Page loaded, initializing auth UI...');
+      
+      // Initialize auth UI first
+      updateAuthUI().then(() => {
+        console.log('🔍 Auth UI initialization complete');
+      });
+      
+      // Set up dropdown functionality
+      const profileIcon = document.getElementById('profileIcon');
+      const profileDropdown = document.getElementById('profileDropdown');
+      
+      if (profileIcon && profileDropdown) {
+        // Toggle dropdown menu when profile icon is clicked
+        profileIcon.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Profile icon clicked');
+          
+          // Toggle dropdown immediately for responsive UI
+          profileDropdown.classList.toggle('active');
+          
+          // Update auth UI in background if dropdown is now open
+          if (profileDropdown.classList.contains('active')) {
+            updateAuthUI(); // No await - run in background
+          }
+        });
+        
+        // Close dropdown when clicking anywhere else on the page
+        document.addEventListener('click', (e) => {
+          if (!profileDropdown.contains(e.target) && !profileIcon.contains(e.target)) {
+            profileDropdown.classList.remove('active');
+          }
+        });
+      } else {
+        console.error('Profile elements not found');
+      }
+      
+      // Wait for demo mode to be set, then configure navigation
+      setTimeout(() => {
+        // Set up navigation links based on demo mode
+        const budgetInsightsLink = document.getElementById('budget-insights-link');
+        const monthlyBillsLink = document.getElementById('monthly-bills-link');
+        
+        console.log('Setting up navigation links, demoMode:', window.demoMode);
+        console.log('budgetInsightsLink:', budgetInsightsLink);
+        console.log('monthlyBillsLink:', monthlyBillsLink);
+        
+        if (window.demoMode) {
+          console.log('Demo mode detected, setting demo links');
+          if (budgetInsightsLink) {
+            budgetInsightsLink.href = '/demo';
+            console.log('Set budget insights link to /demo');
+          }
+          if (monthlyBillsLink) {
+            monthlyBillsLink.href = '/demo/bills';
+            monthlyBillsLink.classList.remove('disabled');
+            console.log('Set monthly bills link to /demo/bills');
+          }
+        } else {
+          console.log('Production mode detected, setting prod links');
+          if (budgetInsightsLink) {
+            budgetInsightsLink.href = '/';
+          }
+          if (monthlyBillsLink) {
+            monthlyBillsLink.href = '/bills';
+            monthlyBillsLink.classList.remove('disabled');
+          }
+        }
+        
+        // Add click handlers for navigation links
+        if (budgetInsightsLink) {
+          budgetInsightsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Budget insights clicked, navigating to:', budgetInsightsLink.href);
+            if (budgetInsightsLink.href && budgetInsightsLink.href !== '#' && budgetInsightsLink.href !== window.location.href + '#') {
+              profileDropdown.classList.remove('active');
+              window.location.href = budgetInsightsLink.href;
+            }
+          });
+        }
+        
+        if (monthlyBillsLink) {
+          monthlyBillsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Monthly bills clicked, navigating to:', monthlyBillsLink.href);
+            if (!monthlyBillsLink.classList.contains('disabled') && monthlyBillsLink.href && monthlyBillsLink.href !== '#' && monthlyBillsLink.href !== window.location.href + '#') {
+              profileDropdown.classList.remove('active');
+              window.location.href = monthlyBillsLink.href;
+            }
+          });
+        }
+        
+        // Log final hrefs for debugging
+        console.log('Final Budget Insights href:', budgetInsightsLink?.href);
+        console.log('Final Monthly Bills href:', monthlyBillsLink?.href);
+      }, 100); // Small delay to ensure demo mode is set
     });
   </script>
 </body>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dropdown Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { margin: 5px; padding: 10px 15px; }
+    </style>
+</head>
+<body>
+    <h1>Dropdown Navigation Test</h1>
+    
+    <div id="test-results"></div>
+    
+    <button onclick="testDropdown()">Test Dropdown Functionality</button>
+    <button onclick="testNavigation()">Test Navigation Links</button>
+    
+    <script>
+        function log(message, isError = false) {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isError ? 'error' : 'success'}`;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            results.appendChild(div);
+        }
+        
+        function testDropdown() {
+            log('Testing dropdown functionality in main app...');
+            
+            // Open the main app in a new window/tab
+            const mainWindow = window.open('http://localhost:8000/demo', '_blank');
+            
+            setTimeout(() => {
+                try {
+                    // Test if we can access the main window (same origin)
+                    const profileIcon = mainWindow.document.getElementById('profileIcon');
+                    const profileDropdown = mainWindow.document.getElementById('profileDropdown');
+                    
+                    if (profileIcon && profileDropdown) {
+                        log('✓ Profile elements found in main app');
+                        
+                        // Simulate click on profile icon
+                        profileIcon.click();
+                        
+                        setTimeout(() => {
+                            if (profileDropdown.classList.contains('active')) {
+                                log('✓ Dropdown opened successfully');
+                                
+                                // Test navigation links
+                                const budgetLink = mainWindow.document.getElementById('budget-insights-link');
+                                const billsLink = mainWindow.document.getElementById('monthly-bills-link');
+                                
+                                log(`Budget Link href: ${budgetLink ? budgetLink.href : 'Not found'}`);
+                                log(`Bills Link href: ${billsLink ? billsLink.href : 'Not found'}`);
+                                
+                                if (budgetLink && budgetLink.href.includes('/demo')) {
+                                    log('✓ Budget insights link correctly configured');
+                                } else {
+                                    log('✗ Budget insights link not properly set', true);
+                                }
+                                
+                                if (billsLink && billsLink.href.includes('/demo/bills')) {
+                                    log('✓ Monthly bills link correctly configured');
+                                } else {
+                                    log('✗ Monthly bills link not properly set', true);
+                                }
+                                
+                            } else {
+                                log('✗ Dropdown did not open', true);
+                            }
+                        }, 500);
+                        
+                    } else {
+                        log('✗ Profile elements not found in main app', true);
+                    }
+                } catch (e) {
+                    log(`Error accessing main app: ${e.message}`, true);
+                }
+            }, 2000);
+        }
+        
+        function testNavigation() {
+            log('Testing navigation directly...');
+            
+            // Test direct navigation
+            fetch('http://localhost:8000/demo')
+                .then(response => {
+                    if (response.ok) {
+                        log('✓ Demo page accessible');
+                        return fetch('http://localhost:8000/demo/bills');
+                    } else {
+                        throw new Error(`Demo page returned ${response.status}`);
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        log('✓ Bills page accessible');
+                    } else {
+                        log(`✗ Bills page returned ${response.status}`, true);
+                    }
+                })
+                .catch(error => {
+                    log(`✗ Navigation test failed: ${error.message}`, true);
+                });
+        }
+    </script>
+</body>
+</html>
