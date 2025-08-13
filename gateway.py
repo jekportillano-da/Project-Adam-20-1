@@ -377,7 +377,7 @@ Make insights specific to Philippine context, current economic conditions, and t
 {chr(10).join([f"🔥 **{rec.get('priority', '').upper()}**: {rec.get('action', '')} → {rec.get('impact', '')} ({rec.get('timeframe', 'ongoing')})" for rec in insights.get('smart_recommendations', [])])}
 
 📰 **Market Alerts:**
-{chr(10).join([f"⚠️ **{alert.get('type', '').replace('_', ' ').title()}**: {alert.get('message', '')} - {alert.get('advice', '')}" for alert in insights.get('market_alerts', [])])}
+{chr(10).join([f"⚠️ **{alert.get('type', '').replace('_', ' ').title()}**: {alert.get('message', '')} - {alert.get('advice', '')} [Market News](https://www.bsp.gov.ph/SitePages/MediaAndResearch/MediaAndResearch.aspx)" for alert in insights.get('market_alerts', [])])}
 
 💰 **Investment Opportunities:**
 {chr(10).join([f"💎 {opp}" for opp in insights.get('investment_opportunities', [])])}
@@ -441,9 +441,9 @@ Adjustments: {', '.join([f"{k}{v:+d}%" for k, v in insights.get('budget_optimiza
             
             # Market alerts based on current conditions
             market_alerts = [
-                "⚠️ **Food Prices**: Rice prices up 8% this month - Stock up on 25kg bags",
-                "⚠️ **Transportation**: Gas prices volatile - Consider carpooling or public transport",
-                "⚠️ **Utilities**: MERALCO rates increasing - Use energy-efficient appliances"
+                "⚠️ **Food Prices**: Rice prices up 8% this month - Stock up on 25kg bags [BSP Food Inflation Report](https://www.bsp.gov.ph/SitePages/MediaAndResearch/SubSitePages/InflationReport.aspx)",
+                "⚠️ **Transportation**: Gas prices volatile - Consider carpooling or public transport [DOE Fuel Prices](https://www.doe.gov.ph/fuel-prices)",
+                "⚠️ **Utilities**: MERALCO rates increasing - Use energy-efficient appliances [MERALCO Rate Updates](https://company.meralco.com.ph/sustainability/our-rates)"
             ]
             
             # Investment opportunities by budget level

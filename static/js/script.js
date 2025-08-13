@@ -727,17 +727,46 @@ document.addEventListener('DOMContentLoaded', () => {
             // Remove loading class if present
             aiPanel.classList.remove('loading');
             
-            // Format the AI tips content
-            const formattedContent = aiTips.tip.split('\n').map(line => {
-                if (line.trim() === '') return '';
-                if (line.includes('🤖') || line.includes('�') || line.includes('🎯') || line.includes('💡') || line.includes('�')) {
-                    return `<h4>${line.trim()}</h4>`;
-                }
-                if (line.startsWith('•') || line.match(/^\d+\./)) {
-                    return `<li>${line.trim()}</li>`;
-                }
-                return `<p>${line.trim()}</p>`;
-            }).join('');
+            // Enhanced markdown-like formatting
+            let formattedContent = aiTips.tip
+                // Convert **text** to <strong>text</strong>
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Convert lines starting with emoji and ** to headers
+                .replace(/^(🎯|📊|💡|📰|💰|⚖️|🎯) \*\*(.*?)\*\*/gm, '<h4><span class="emoji">$1</span> $2</h4>')
+                // Convert bullet points
+                .replace(/^• (.*)/gm, '<li>$1</li>')
+                .replace(/^✅ (.*)/gm, '<li class="action-item">✅ $1</li>')
+                .replace(/^⚠️ (.*)/gm, '<li class="alert-item">⚠️ $1</li>')
+                .replace(/^💎 (.*)/gm, '<li class="investment-item">💎 $1</li>')
+                .replace(/^🔥 (.*)/gm, '<li class="priority-high">🔥 $1</li>')
+                .replace(/^💡 (.*)/gm, '<li class="priority-medium">💡 $1</li>')
+                .replace(/^⚡ (.*)/gm, '<li class="priority-low">⚡ $1</li>')
+                // Convert news links [Title](URL) to proper hyperlinks
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="news-link">$1 🔗</a>')
+                // Convert paragraphs
+                .split('\n')
+                .map(line => {
+                    line = line.trim();
+                    if (line === '') return '';
+                    if (line.startsWith('<h4>') || line.startsWith('<li')) return line;
+                    if (line.includes(':') && !line.startsWith('<')) {
+                        return `<p class="insight-detail">${line}</p>`;
+                    }
+                    return `<p>${line}</p>`;
+                })
+                .join('');
+            
+            // Wrap consecutive <li> elements in <ul>
+            formattedContent = formattedContent
+                .replace(/(<li[^>]*>.*?<\/li>)(?=\s*<li)/g, '$1')
+                .replace(/(<li[^>]*>.*?<\/li>)(?!\s*<li)/g, '$1</ul>')
+                .replace(/(<li[^>]*>)/g, function(match, p1, offset, string) {
+                    const beforeLi = string.substring(0, offset);
+                    if (!beforeLi.includes('<ul>') || beforeLi.lastIndexOf('</ul>') > beforeLi.lastIndexOf('<ul>')) {
+                        return '<ul>' + p1;
+                    }
+                    return p1;
+                });
             
             aiContent.innerHTML = formattedContent;
         } else {
