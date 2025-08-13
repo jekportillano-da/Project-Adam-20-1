@@ -7,6 +7,7 @@ import httpx
 import logging
 import os
 import time
+import json
 from pathlib import Path
 
 # Configure logging
@@ -509,7 +510,7 @@ Adjustments: Focus on emergency fund building and expense tracking
 
 @app.api_route("/api/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_to_service(service: str, path: str, request: Request):
-    """Proxy all API requests to the appropriate microservice"""
+    """Proxy all API requests to the appropriate microservice with AI enhancement"""
     if service not in SERVICES:
         logger.error(f"Service '{service}' not found in configured services")
         raise HTTPException(status_code=404, detail=f"Service '{service}' not found")
@@ -517,6 +518,114 @@ async def proxy_to_service(service: str, path: str, request: Request):
     # Get the target service URL
     service_url = SERVICES[service]
     logger.debug(f"Proxying request to {service} service at {service_url}/{path}")
+    
+    # Special handling for insights service - enhance with AI
+    if service == "insights" and path == "analyze":
+        try:
+            # Get request body
+            body = await request.body()
+            request_data = json.loads(body) if body else {}
+            
+            # First get standard insights from the insights service
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{service_url}/{path}",
+                    json=request_data,
+                    timeout=10.0
+                )
+                
+                if response.status_code == 200:
+                    insights_data = response.json()
+                    
+                    # Enhance with AI analysis
+                    groq_api_key = os.getenv('GROQ_API_KEY')
+                    if groq_api_key and request_data.get('budget_breakdown'):
+                        try:
+                            # Import and initialize Groq client
+                            from openai import OpenAI
+                            
+                            groq_client = OpenAI(
+                                api_key=groq_api_key,
+                                base_url="https://api.groq.com/openai/v1"
+                            )
+                            budget_breakdown = request_data['budget_breakdown']
+                            savings_data = request_data.get('savings_data', {})
+                            
+                            # Calculate budget level
+                            total_budget = sum(float(v) for v in budget_breakdown.get('categories', {}).values())
+                            budget_level = 'high' if total_budget > 50000 else 'medium' if total_budget > 20000 else 'low'
+                            
+                            # AI enhancement prompt
+                            ai_prompt = f"""Analyze this budget and provide enhanced insights:
+
+Budget Categories: {budget_breakdown.get('categories', {})}
+Total Budget: {total_budget}
+Savings Rate: {(budget_breakdown.get('total_savings', 0) / total_budget * 100):.1f}%
+Emergency Fund Progress: {savings_data.get('emergency_fund_progress', 0)}%
+Current Health Score: {insights_data.get('health_score', 0)}
+
+Please provide:
+1. 2-3 specific actionable insights based on the data
+2. Assessment of financial behaviors and trends
+3. Personalized recommendations for improvement
+4. Potential risks and opportunities
+
+Respond with a JSON object with:
+- enhanced_insights: [array of insight objects with type and message]
+- ai_recommendations: [array of specific actionable recommendations]
+- risk_assessment: string describing potential risks
+- opportunities: [array of opportunities specific to this budget level]
+"""
+
+                            ai_response = groq_client.chat.completions.create(
+                                model="llama3-70b-8192",
+                                messages=[
+                                    {
+                                        "role": "system",
+                                        "content": "You are an expert Filipino financial advisor. Provide detailed, actionable financial insights in JSON format."
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": ai_prompt
+                                    }
+                                ],
+                                temperature=0.7,
+                                max_tokens=1000
+                            )
+                            
+                            if ai_response.choices and ai_response.choices[0].message.content:
+                                ai_data = json.loads(ai_response.choices[0].message.content)
+                                
+                                # Merge AI insights with standard insights
+                                enhanced_insights = insights_data.copy()
+                                
+                                # Add AI-enhanced insights
+                                if 'enhanced_insights' in ai_data:
+                                    enhanced_insights['insights'].extend(ai_data['enhanced_insights'])
+                                
+                                # Add AI recommendations
+                                if 'ai_recommendations' in ai_data:
+                                    enhanced_insights['recommendations'].extend(ai_data['ai_recommendations'])
+                                
+                                # Add new AI fields
+                                enhanced_insights['risk_assessment'] = ai_data.get('risk_assessment', '')
+                                enhanced_insights['opportunities'] = ai_data.get('opportunities', [])
+                                enhanced_insights['ai_enhanced'] = True
+                                
+                                return enhanced_insights
+                                
+                        except Exception as e:
+                            logger.warning(f"AI enhancement failed for insights: {str(e)}")
+                    
+                    return insights_data
+                else:
+                    raise HTTPException(status_code=response.status_code, detail=f"Insights service error: {response.text}")
+                    
+        except Exception as e:
+            logger.error(f"Error in enhanced insights proxy: {str(e)}")
+            # Fall back to standard proxy
+    
+    # Standard proxy logic for all other services
     
     # Forward the request to the appropriate service
     try:

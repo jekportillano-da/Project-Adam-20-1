@@ -389,6 +389,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update AI insights in the right panel
         updateAIInsights(aiTips);
         
+        // NEW: Update health score and insights visualization
+        updateHealthScoreDisplay(insights);
+        
+        // NEW: Update insights-based recommendations
+        updateInsightsRecommendations(insights);
+        
         // Update savings chart
         savingsChart.data.datasets[0].data = savings.monthly_projections;
         savingsChart.update();
@@ -892,5 +898,111 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${totalBills > 0 ? `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Manage your bills</a> to see even more accurate breakdowns!</p>` : `<p class="bills-tip">💡 <a href="/bills" style="color: var(--primary-color); text-decoration: none;">Add your bills</a> for a more accurate budget breakdown!</p>`}
             </div>
         `;
+    }
+    
+    // NEW: Update health score display with AI insights integration
+    function updateHealthScoreDisplay(insights) {
+        const healthContainer = document.getElementById('healthScoreContainer');
+        const scoreValue = document.getElementById('healthScoreValue');
+        const moodLabel = document.querySelector('.mood-label');
+        const moodEmoji = document.querySelector('.mood-emoji');
+        
+        if (healthContainer && insights && insights.health_score !== undefined) {
+            // Show the health score container
+            healthContainer.style.display = 'flex';
+            
+            // Update score value
+            if (scoreValue) {
+                scoreValue.textContent = Math.round(insights.health_score);
+            }
+            
+            // Update mood based on status
+            if (moodLabel && moodEmoji) {
+                switch(insights.status) {
+                    case 'excellent':
+                        moodLabel.textContent = 'Excellent!';
+                        moodEmoji.textContent = '🎉';
+                        break;
+                    case 'on_track':
+                        moodLabel.textContent = 'On Track!';
+                        moodEmoji.textContent = '✅';
+                        break;
+                    case 'needs_improvement':
+                        moodLabel.textContent = 'Needs Work';
+                        moodEmoji.textContent = '⚠️';
+                        break;
+                    default:
+                        moodLabel.textContent = 'Analyzing...';
+                        moodEmoji.textContent = '🤖';
+                }
+            }
+            
+            // Add dynamic color based on score
+            if (scoreValue) {
+                const score = Math.round(insights.health_score);
+                scoreValue.className = 'score-value';
+                if (score >= 80) {
+                    scoreValue.classList.add('score-excellent');
+                } else if (score >= 60) {
+                    scoreValue.classList.add('score-good');
+                } else {
+                    scoreValue.classList.add('score-needs-work');
+                }
+            }
+        }
+    }
+    
+    // NEW: Update insights-based recommendations
+    function updateInsightsRecommendations(insights) {
+        const moodInsight = document.querySelector('.mood-insight');
+        
+        if (insights && insights.insights && insights.recommendations && moodInsight) {
+            // Create insights display
+            let insightsHTML = '';
+            
+            // Add structured insights
+            if (insights.insights.length > 0) {
+                insightsHTML += '<div class="structured-insights">';
+                insights.insights.forEach(insight => {
+                    const iconMap = {
+                        'success': '✅',
+                        'warning': '⚠️', 
+                        'info': 'ℹ️'
+                    };
+                    insightsHTML += `
+                        <div class="insight-item insight-${insight.type}">
+                            <span class="insight-icon">${iconMap[insight.type] || 'ℹ️'}</span>
+                            <span class="insight-message">${insight.message}</span>
+                        </div>
+                    `;
+                });
+                insightsHTML += '</div>';
+            }
+            
+            // Add recommendations
+            if (insights.recommendations.length > 0) {
+                insightsHTML += '<div class="structured-recommendations">';
+                insightsHTML += '<h4>💡 Quick Actions:</h4>';
+                insights.recommendations.forEach(recommendation => {
+                    insightsHTML += `
+                        <div class="recommendation-item">
+                            <span class="rec-bullet">→</span>
+                            <span class="rec-text">${recommendation}</span>
+                        </div>
+                    `;
+                });
+                insightsHTML += '</div>';
+            }
+            
+            // Find or create insights container
+            let insightsContainer = moodInsight.querySelector('.ai-enhanced-insights');
+            if (!insightsContainer) {
+                insightsContainer = document.createElement('div');
+                insightsContainer.className = 'ai-enhanced-insights';
+                moodInsight.appendChild(insightsContainer);
+            }
+            
+            insightsContainer.innerHTML = insightsHTML;
+        }
     }
 });

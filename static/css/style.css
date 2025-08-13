@@ -622,3 +622,132 @@ input:focus, select:focus {
     color: var(--primary-color);
     font-weight: 600;
 }
+
+/* Health Score Visualization */
+.health-score-container {
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    margin: 16px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(27, 73, 101, 0.1), rgba(98, 182, 203, 0.1));
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.health-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.score-label {
+    font-size: 0.85em;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.score-value {
+    font-size: 2em;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.score-value.score-excellent {
+    color: var(--success-color);
+}
+
+.score-value.score-good {
+    color: var(--warning-color);
+}
+
+.score-value.score-needs-work {
+    color: var(--danger-color);
+}
+
+.ai-health-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: rgba(27, 73, 101, 0.1);
+    border-radius: 16px;
+    font-size: 0.8em;
+    color: var(--primary-color);
+}
+
+/* Structured Insights Display */
+.ai-enhanced-insights {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+}
+
+.structured-insights {
+    margin-bottom: 16px;
+}
+
+.insight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 8px 0;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.insight-item.insight-success {
+    background: rgba(76, 175, 80, 0.1);
+    border-left: 3px solid var(--success-color);
+}
+
+.insight-item.insight-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border-left: 3px solid var(--warning-color);
+}
+
+.insight-item.insight-info {
+    background: rgba(27, 73, 101, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.insight-icon {
+    font-size: 1.1em;
+    margin-top: 1px;
+}
+
+.insight-message {
+    flex: 1;
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.structured-recommendations h4 {
+    margin: 0 0 12px 0;
+    color: var(--primary-color);
+    font-size: 1em;
+}
+
+.recommendation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 6px 0;
+    padding: 6px 0;
+}
+
+.rec-bullet {
+    color: var(--accent-color);
+    font-weight: bold;
+    margin-top: 1px;
+}
+
+.rec-text {
+    flex: 1;
+    font-size: 0.9em;
+    line-height: 1.3;
+    color: var(--text-color);
+}
