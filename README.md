@@ -1,6 +1,6 @@
-# Project Adam - Filipino Budget Assistant
+# Budget Buddy Mobile
 
-A Flask-based web application that provides personalized budget advice for Filipino users. The app generates culturally relevant financial recommendations using the DeepSeek AI model.
+An offline-first mobile budget calculator and savings tracker built with React Native and Expo.
 
 ## Features
 - Input any budget amount and timeframe (daily/weekly/monthly)
