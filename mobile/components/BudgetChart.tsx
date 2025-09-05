@@ -1,15 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BudgetBreakdown } from '../stores/budgetStore';
+import { formatCurrency } from '../utils/currencyUtils';
 
 interface BudgetChartProps {
   breakdown: BudgetBreakdown;
-  currency?: string;
 }
 
 const BudgetChart: React.FC<BudgetChartProps> = ({ 
-  breakdown, 
-  currency = '$' 
+  breakdown
 }) => {
   if (!breakdown || !breakdown.categories) {
     return (
@@ -23,11 +22,17 @@ const BudgetChart: React.FC<BudgetChartProps> = ({
   const screenWidth = Dimensions.get('window').width - 40; // padding
 
   const categoryColors: Record<string, string> = {
-    food: '#FF6B6B',
+    'food/groceries': '#FF6B6B',
+    food: '#FF6B6B', // backward compatibility
     transportation: '#4ECDC4',
     utilities: '#45B7D1',
     emergency_fund: '#96CEB4',
     discretionary: '#FFEAA7',
+    miscellaneous: '#FFEAA7',
+    entertainment: '#9B59B6',
+    healthcare: '#E74C3C',
+    education: '#F39C12',
+    savings: '#27AE60',
   };
 
   const renderCategory = (category: string, amount: number) => {
@@ -49,7 +54,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({
             </Text>
           </View>
           <Text style={styles.categoryAmount}>
-            {currency}{amount.toFixed(2)}
+            {formatCurrency(amount)}
           </Text>
           <Text style={styles.categoryPercentage}>
             {percentage.toFixed(1)}%
@@ -75,7 +80,7 @@ const BudgetChart: React.FC<BudgetChartProps> = ({
       <View style={styles.header}>
         <Text style={styles.title}>Budget Breakdown</Text>
         <Text style={styles.total}>
-          Total: {currency}{total.toFixed(2)}
+          Total: {formatCurrency(total)}
         </Text>
       </View>
 
@@ -89,13 +94,13 @@ const BudgetChart: React.FC<BudgetChartProps> = ({
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Essential Expenses:</Text>
           <Text style={styles.summaryValue}>
-            {currency}{breakdown.total_essential.toFixed(2)}
+            {formatCurrency(breakdown.total_essential)}
           </Text>
         </View>
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Total Savings:</Text>
           <Text style={styles.summaryValue}>
-            {currency}{breakdown.total_savings.toFixed(2)}
+            {formatCurrency(breakdown.total_savings)}
           </Text>
         </View>
         <View style={styles.summaryRow}>

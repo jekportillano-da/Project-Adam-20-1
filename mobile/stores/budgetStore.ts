@@ -1,8 +1,16 @@
+/*
+ * MIT License
+ * Copyright (c) 2024 Budget Buddy Mobile
+ * 
+ * Budget store for managing budget data and calculations
+ */
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { budgetService } from '../services/budgetService';
 import { databaseService } from '../services/databaseService';
+import { logger } from '../utils/logger';
 
 export interface BudgetBreakdown {
   categories: Record<string, number>;
@@ -70,11 +78,11 @@ export const useBudgetStore = create<BudgetState>()(
         set({ isLoading: true, error: null });
         
         try {
-          console.log('Calculating budget for:', amount, duration);
+          logger.debug('Calculating budget', { amount, duration });
           
           // Use offline calculation first (simpler and more reliable)
           const breakdown = budgetService.calculateBudgetOffline(amount, duration);
-          console.log('Budget breakdown:', breakdown);
+          logger.debug('Budget breakdown calculated', { breakdown });
           
           // Try to save to database (don't fail if it doesn't work)
           try {
@@ -87,7 +95,7 @@ export const useBudgetStore = create<BudgetState>()(
               {}
             );
           } catch (dbError) {
-            console.warn('Database save failed:', dbError);
+            logger.warn('Database save failed', { error: dbError });
             // Continue without database - app should still work
           }
           
@@ -98,7 +106,7 @@ export const useBudgetStore = create<BudgetState>()(
             isLoading: false 
           });
         } catch (error) {
-          console.error('Budget calculation error:', error);
+          logger.error('Budget calculation error', { error });
           set({ 
             error: error instanceof Error ? error.message : 'Failed to calculate budget',
             isLoading: false 
@@ -123,7 +131,7 @@ export const useBudgetStore = create<BudgetState>()(
               set({ savingsForecast: forecast });
               return;
             } catch (error) {
-              console.log('Online forecast failed, falling back to offline');
+              logger.debug('Online forecast failed, falling back to offline');
             }
           }
           
@@ -132,7 +140,7 @@ export const useBudgetStore = create<BudgetState>()(
           set({ savingsForecast: forecast });
           
         } catch (error) {
-          console.error('Savings forecast error:', error);
+          logger.error('Savings forecast error', { error });
         }
       },
 
@@ -148,7 +156,7 @@ export const useBudgetStore = create<BudgetState>()(
               set({ insights });
               return;
             } catch (error) {
-              console.log('Online insights failed, falling back to offline');
+              logger.debug('Online insights failed, falling back to offline');
             }
           }
           
@@ -157,7 +165,7 @@ export const useBudgetStore = create<BudgetState>()(
           set({ insights });
           
         } catch (error) {
-          console.error('Insights error:', error);
+          logger.error('Insights error', { error });
         }
       },
 
@@ -177,7 +185,7 @@ export const useBudgetStore = create<BudgetState>()(
           
           set({ pendingSync: [] });
         } catch (error) {
-          console.error('Sync failed:', error);
+          logger.error('Sync failed', { error });
         }
       },
 

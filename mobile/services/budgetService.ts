@@ -74,7 +74,7 @@ class BudgetService {
 
     // Define category percentages (same as your backend)
     const percentages = {
-      food: 0.30,
+      'food/groceries': 0.30,
       transportation: 0.15,
       utilities: 0.20,
       emergency_fund: 0.20,
@@ -87,7 +87,7 @@ class BudgetService {
       categories[category] = Math.round(adjusted_amount * percentage * 100) / 100;
     }
 
-    const total_essential = categories.food + categories.transportation + categories.utilities;
+    const total_essential = categories['food/groceries'] + categories.transportation + categories.utilities;
     const total_savings = categories.emergency_fund + categories.discretionary;
 
     return {

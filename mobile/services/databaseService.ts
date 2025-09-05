@@ -1,4 +1,12 @@
+/*
+ * MIT License
+ * Copyright (c) 2024 Budget Buddy Mobile
+ * 
+ * Database service for SQLite data persistence
+ */
+
 import * as SQLite from 'expo-sqlite';
+import { logger } from '../utils/logger';
 
 export interface BudgetRecord {
   id: number;
@@ -27,9 +35,9 @@ class DatabaseService {
     try {
       this.db = await SQLite.openDatabaseAsync('budget_buddy_mobile.db');
       await this.createTables();
-      console.log('✅ Database initialized successfully');
+      logger.debug('Database initialized successfully');
     } catch (error) {
-      console.error('❌ Database initialization error:', error);
+      logger.error('Database initialization error', { error });
       throw error;
     }
   }

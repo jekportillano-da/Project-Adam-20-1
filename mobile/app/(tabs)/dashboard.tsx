@@ -9,11 +9,17 @@ import {
   Alert,
 } from 'react-native';
 import { useBudgetStore } from '../../stores/budgetStore';
+import { useBillsStore } from '../../stores/billsStore';
+import { grokAIService } from '../../services/grokAIService';
 import BudgetChart from '../../components/BudgetChart';
+import { formatCurrency } from '../../utils/currencyUtils';
 
 export default function Dashboard() {
   const [budgetAmount, setBudgetAmount] = useState('');
   const [duration, setDuration] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+  const [aiBreakdown, setAiBreakdown] = useState<any>(null);
+  const [aiRecommendations, setAiRecommendations] = useState<string[]>([]);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   
   const { 
     currentBudget, 
@@ -24,38 +30,62 @@ export default function Dashboard() {
     getInsights 
   } = useBudgetStore();
 
-  // Debug: Log state changes
-  console.log('Dashboard render - breakdown:', breakdown);
-  console.log('Dashboard render - budgetAmount:', budgetAmount);
-  console.log('Dashboard render - isLoading:', isLoading);
-  console.log('Dashboard render - currentBudget:', currentBudget);
+  // Get bills data
+  const { bills, monthlyTotal } = useBillsStore();
+
+  // Create combined breakdown using actual bills data
+  const createActualBreakdown = () => {
+    if (bills.length === 0) return null;
+
+    // Group bills by category
+    const billsByCategory = bills.reduce((acc, bill) => {
+      acc[bill.category] = (acc[bill.category] || 0) + bill.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Add missing essential categories with zero amounts
+    const essentialCategories = ['food/groceries', 'food', 'transportation', 'utilities', 'rent', 'healthcare'];
+    essentialCategories.forEach(category => {
+      if (!billsByCategory[category]) {
+        billsByCategory[category] = 0;
+      }
+    });
+
+    const totalEssential = Object.values(billsByCategory).reduce((sum, amount) => sum + amount, 0);
+    const estimatedSavings = breakdown ? breakdown.total_savings : 0;
+
+    return {
+      categories: billsByCategory,
+      total_essential: totalEssential,
+      total_savings: estimatedSavings,
+    };
+  };
+
+  const actualBreakdown = createActualBreakdown();
 
   const handleCalculate = async () => {
-    console.log('handleCalculate called');
     if (!budgetAmount || parseFloat(budgetAmount) <= 0) {
       Alert.alert('Error', 'Please enter a valid budget amount');
       return;
     }
 
     try {
-      console.log('About to calculate budget:', budgetAmount, duration);
+      setIsGeneratingAI(true);
       
-      // Calculate budget breakdown
+      // Calculate basic budget breakdown
       await calculateBudget(parseFloat(budgetAmount), duration);
-      console.log('Budget calculated, breakdown:', breakdown);
+      
+      // Generate AI-powered comprehensive breakdown
+      const smartBreakdown = await grokAIService.generateSmartBudgetBreakdown(parseFloat(budgetAmount));
+      setAiBreakdown(smartBreakdown);
+      setAiRecommendations(smartBreakdown.aiRecommendations);
       
     } catch (error) {
       Alert.alert('Error', 'Failed to calculate budget. Please try again.');
       console.error('Budget calculation error:', error);
+    } finally {
+      setIsGeneratingAI(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 2,
-    }).format(amount);
   };
 
   return (
@@ -98,37 +128,143 @@ export default function Dashboard() {
         </View>
 
         <TouchableOpacity
-          style={[styles.calculateButton, isLoading && styles.calculateButtonDisabled]}
+          style={[styles.calculateButton, (isLoading || isGeneratingAI) && styles.calculateButtonDisabled]}
           onPress={handleCalculate}
-          disabled={isLoading}
+          disabled={isLoading || isGeneratingAI}
         >
           <Text style={styles.calculateButtonText}>
-            {isLoading ? 'Calculating...' : 'Calculate Budget'}
+            {isGeneratingAI ? '🤖 Generating AI Budget...' : 
+             isLoading ? 'Calculating...' : 
+             'Generate Smart Budget'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {breakdown && (
+      {/* AI-Powered Comprehensive Breakdown */}
+      {aiBreakdown && (
         <View style={styles.resultsSection}>
-          <Text style={styles.sectionTitle}>Budget Breakdown</Text>
+          <Text style={styles.sectionTitle}>🤖 AI-Powered Budget Breakdown</Text>
+          <Text style={styles.aiSubtitle}>
+            Smart allocation based on your bills + Philippines financial best practices
+          </Text>
+          
+          {/* AI Budget Chart */}
+          <BudgetChart breakdown={aiBreakdown} />
+          
+          {/* Comprehensive Summary */}
+          <View style={styles.billsSummary}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Your Current Bills:</Text>
+              <Text style={styles.summaryValue}>{formatCurrency(monthlyTotal)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Recommended Total Budget:</Text>
+              <Text style={styles.summaryValue}>{formatCurrency(parseFloat(budgetAmount || '0'))}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Available for New Categories:</Text>
+              <Text style={[
+                styles.summaryValue,
+                { color: parseFloat(budgetAmount || '0') > monthlyTotal ? '#4CAF50' : '#F44336' }
+              ]}>
+                {formatCurrency(Math.max(0, parseFloat(budgetAmount || '0') - monthlyTotal))}
+              </Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Emergency Fund + Savings:</Text>
+              <Text style={[styles.summaryValue, { color: '#FF9800' }]}>
+                {formatCurrency(aiBreakdown.total_savings)}
+              </Text>
+            </View>
+          </View>
+
+          {/* AI Recommendations */}
+          {aiRecommendations.length > 0 && (
+            <View style={styles.recommendationsSection}>
+              <Text style={styles.recommendationsTitle}>🧠 AI Recommendations</Text>
+              {aiRecommendations.map((recommendation, index) => (
+                <View key={index} style={styles.recommendationItem}>
+                  <Text style={styles.recommendationText}>{recommendation}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.totalSection}>
+            <View style={styles.totalItem}>
+              <Text style={styles.totalLabel}>Total Essential Spending</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(aiBreakdown.total_essential)}
+              </Text>
+            </View>
+            <View style={styles.totalItem}>
+              <Text style={styles.totalLabel}>Emergency Fund + Savings</Text>
+              <Text style={[styles.totalAmount, styles.savingsAmount]}>
+                {formatCurrency(aiBreakdown.total_savings)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {actualBreakdown && !aiBreakdown && (
+        <View style={styles.resultsSection}>
+          <Text style={styles.sectionTitle}>💰 Actual Spending Breakdown</Text>
+          
+          {/* Budget Chart using actual bills data */}
+          <BudgetChart breakdown={actualBreakdown} />
+          
+          {/* Summary Section */}
+          <View style={styles.billsSummary}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total Bills:</Text>
+              <Text style={styles.summaryValue}>{formatCurrency(monthlyTotal)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Number of Bills:</Text>
+              <Text style={styles.summaryValue}>{bills.length}</Text>
+            </View>
+            {breakdown && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>vs Planned Budget:</Text>
+                <Text style={[
+                  styles.summaryValue,
+                  { color: monthlyTotal <= breakdown.total_essential ? '#4CAF50' : '#F44336' }
+                ]}>
+                  {monthlyTotal <= breakdown.total_essential ? 'Within Budget' : 'Over Budget'}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Savings Projection */}
+          {breakdown && (
+            <View style={styles.totalSection}>
+              <View style={styles.totalItem}>
+                <Text style={styles.totalLabel}>Total Spending</Text>
+                <Text style={styles.totalAmount}>
+                  {formatCurrency(monthlyTotal)}
+                </Text>
+              </View>
+              <View style={styles.totalItem}>
+                <Text style={styles.totalLabel}>Planned Savings</Text>
+                <Text style={[styles.totalAmount, styles.savingsAmount]}>
+                  {formatCurrency(breakdown.total_savings)}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Show budget breakdown only if no actual bills exist */}
+      {breakdown && !actualBreakdown && (
+        <View style={styles.resultsSection}>
+          <Text style={styles.sectionTitle}>📊 Planned Budget Breakdown</Text>
           
           {/* Budget Chart */}
           <BudgetChart breakdown={breakdown} />
           
-          {/* Categories List */}
-          <View style={styles.categoriesList}>
-            {Object.entries(breakdown.categories).map(([category, amount]) => (
-              <View key={category} style={styles.categoryItem}>
-                <Text style={styles.categoryName}>
-                  {category.charAt(0).toUpperCase() + category.slice(1).replace('_', ' ')}
-                </Text>
-                <Text style={styles.categoryAmount}>
-                  {formatCurrency(amount)}
-                </Text>
-              </View>
-            ))}
-          </View>
-
           <View style={styles.totalSection}>
             <View style={styles.totalItem}>
               <Text style={styles.totalLabel}>Essential Expenses</Text>
@@ -143,23 +279,25 @@ export default function Dashboard() {
               </Text>
             </View>
           </View>
-          
-          {/* Debug Information */}
-          <View style={styles.debugSection}>
-            <Text style={styles.debugText}>
-              Debug: Categories: {Object.keys(breakdown.categories).length}
-              {'\n'}Essential: ₱{breakdown.total_essential}
-              {'\n'}Savings: ₱{breakdown.total_savings}
-              {'\n'}JSON: {JSON.stringify(breakdown, null, 2).substring(0, 200)}...
-            </Text>
-          </View>
         </View>
       )}
-      
-      {!breakdown && !isLoading && (
+
+      {/* Show helpful message when no bills */}
+      {!actualBreakdown && !breakdown && !isLoading && (
         <View style={styles.noDataSection}>
           <Text style={styles.noDataText}>
-            💡 Enter a budget amount and tap "Calculate Budget" to see your breakdown
+            💡 Get started by either:
+            {'\n'}• Adding bills in the Bills tab to see actual spending
+            {'\n'}• Entering a budget amount above to see planned breakdown
+          </Text>
+        </View>
+      )}
+
+      {/* Show message when only planned budget exists */}
+      {breakdown && !actualBreakdown && (
+        <View style={styles.tipSection}>
+          <Text style={styles.tipText}>
+            💡 Add bills in the Bills tab to see how your actual spending compares to this planned budget
           </Text>
         </View>
       )}
@@ -308,19 +446,6 @@ const styles = StyleSheet.create({
   savingsAmount: {
     color: '#4CAF50',
   },
-  debugSection: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  debugText: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'monospace',
-  },
   noDataSection: {
     backgroundColor: 'white',
     margin: 16,
@@ -338,5 +463,77 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  
+  // Bills Summary Styles
+  billsSummary: {
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2196F3',
+  },
+  
+  // Tip Section Styles
+  tipSection: {
+    backgroundColor: '#E3F2FD',
+    margin: 16,
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#1976D2',
+    lineHeight: 20,
+  },
+  
+  // AI Budget Breakdown Styles
+  aiSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  recommendationsSection: {
+    backgroundColor: '#F3E5F5',
+    padding: 16,
+    borderRadius: 8,
+    marginVertical: 16,
+  },
+  recommendationsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#6A1B9A',
+    marginBottom: 12,
+  },
+  recommendationItem: {
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 6,
+    marginBottom: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9C27B0',
+  },
+  recommendationText: {
+    fontSize: 13,
+    color: '#333',
+    lineHeight: 18,
   },
 });

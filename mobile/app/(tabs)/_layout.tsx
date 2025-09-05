@@ -18,15 +18,6 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="debug"
-        options={{
-          title: 'Debug',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'bug' : 'bug-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Dashboard',
@@ -36,11 +27,29 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="bills"
+        options={{
+          title: 'Bills',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name={focused ? 'receipt' : 'receipt-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="insights"
         options={{
           title: 'Insights',
           tabBarIcon: ({ color, focused }) => (
             <TabIcon name={focused ? 'analytics' : 'analytics-outline'} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name={focused ? 'person' : 'person-outline'} color={color} />
           ),
         }}
       />
@@ -62,7 +71,9 @@ function TabIcon({ name, color }: { name: string; color: string }) {
   const getEmoji = () => {
     if (name === 'bug' || name === 'bug-outline') return '🐛';
     if (name === 'home' || name === 'home-outline') return '🏠';
+    if (name === 'receipt' || name === 'receipt-outline') return '🧾';
     if (name === 'analytics' || name === 'analytics-outline') return '📊';
+    if (name === 'person' || name === 'person-outline') return '👤';
     return '⚙️';
   };
   
