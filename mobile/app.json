@@ -10,14 +10,29 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.budgetbuddy.mobile"
     },
     "android": {
-      "package": "com.anonymous.budgetbuddymobile"
+      "package": "com.budgetbuddy.mobile",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro"
     },
-    "scheme": "budget-buddy"
+    "scheme": "budget-buddy",
+    "extra": {
+      "eas": {
+        "projectId": "e17260ad-76ff-462e-9ec5-b0bc63c25696"
+      }
+    }
   }
 }

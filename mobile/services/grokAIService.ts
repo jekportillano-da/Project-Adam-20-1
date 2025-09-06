@@ -22,13 +22,25 @@ class GrokAIService {
       process.env.EXPO_PUBLIC_GROK_API_KEY ||
       'PLEASE_SET_YOUR_GROK_API_KEY';
     
+    // Debug logging to verify API key loading
+    if (__DEV__) {
+      logger.debug('Environment variables check', {
+        hasGrokApiKey: !!process.env.GROK_API_KEY,
+        hasExpoPublicGrokApiKey: !!process.env.EXPO_PUBLIC_GROK_API_KEY,
+        apiKeyLength: this.apiKey.length,
+        isConfigured: this.isConfigured()
+      });
+    }
+    
     if (this.apiKey === 'PLEASE_SET_YOUR_GROK_API_KEY') {
       logger.warn('GROK API KEY NOT SET! Please set GROK_API_KEY environment variable');
       logger.warn('Instructions:');
       logger.warn('1. Get API key from: https://console.x.ai/');
-      logger.warn('2. Create .env.local file with: EXPO_PUBLIC_GROK_API_KEY=your-key');
+      logger.warn('2. Create .env file with: EXPO_PUBLIC_GROK_API_KEY=your-key');
       logger.warn('3. Restart the development server');
       logger.warn('AI insights will use mock data until API key is configured');
+    } else {
+      logger.debug('Grok AI service initialized with API key');
     }
   }
 
